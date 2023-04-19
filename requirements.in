@@ -1,0 +1,12 @@
+django
+djangorestframework
+django-modeltranslation
+django-environ
+pytest-django
+pytest-cov
+pip-tools
+black
+isort
+flake8
+pandas
+psycopg2-binary
