@@ -1,6 +1,8 @@
-from pathlib import Path
 import os
+from pathlib import Path
+
 import environ
+from django.conf.global_settings import LANGUAGES as GLOBAL_LANGUAGES
 from django.core.exceptions import ImproperlyConfigured
 
 CONFIG_FILE_NAME = "config_dev.env"
@@ -34,6 +36,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "modeltranslation",
     "profiles.apps.ProfilesConfig",
 ]
 
@@ -96,10 +99,17 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# Map language codes to the (code, name) tuples used by Django
+# We want to keep the ordering in LANGUAGES configuration variable,
+# thus some gyrations
+language_map = {x: y for x, y in GLOBAL_LANGUAGES}
+try:
+    LANGUAGES = tuple((lang, language_map[lang]) for lang in env("LANGUAGES"))
+except KeyError as e:
+    raise ImproperlyConfigured(f'unknown language code "{e.args[0]}"')
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
-
 
 LANGUAGE_CODE = env("LANGUAGES")[0]
 MODELTRANSLATION_DEFAULT_LANGUAGE = LANGUAGE_CODE
