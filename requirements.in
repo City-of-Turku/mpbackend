@@ -2,6 +2,7 @@ django
 djangorestframework
 django-modeltranslation
 django-environ
+django-extensions
 pytest-django
 pytest-cov
 pip-tools
