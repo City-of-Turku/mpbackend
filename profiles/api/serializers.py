@@ -10,15 +10,9 @@ from profiles.models import (
 )
 
 
-class QuestionSerializer(serializers.ModelSerializer):
+class AnimalSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Question
-        fields = "__all__"
-
-
-class QuestionConditionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = QuestionCondition
+        model = Animal
         fields = "__all__"
 
 
@@ -27,16 +21,37 @@ class OptionSerializer(serializers.ModelSerializer):
         model = Option
         fields = "__all__"
 
+    def to_representation(self, obj):
+        representation = super().to_representation(obj)
+        representation["animals"] = AnimalSerializer(obj.animals, many=True).data
+        return representation
+
 
 class OptionGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = OptionGroup
         fields = "__all__"
 
+    def to_representation(self, obj):
+        representation = super().to_representation(obj)
+        representation["options"] = OptionSerializer(obj.options, many=True).data
+        return representation
 
-class AnimalSerializer(serializers.ModelSerializer):
+
+class QuestionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Animal
+        model = Question
+        fields = "__all__"
+
+    def to_representation(self, obj):
+        representation = super().to_representation(obj)
+        representation["options"] = OptionSerializer(obj.options, many=True).data
+        return representation
+
+
+class QuestionConditionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuestionCondition
         fields = "__all__"
 
 
