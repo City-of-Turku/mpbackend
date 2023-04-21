@@ -19,6 +19,9 @@ class Question(models.Model):
 class OptionGroup(models.Model):
     description = models.CharField(max_length=255, null=True)
     additional_description = models.CharField(max_length=255, null=True)
+    question = models.ForeignKey(
+        "Question", related_name="option_groups", null=True, on_delete=models.CASCADE
+    )
 
 
 class Option(models.Model):
