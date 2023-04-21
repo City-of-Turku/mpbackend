@@ -11,3 +11,4 @@ isort
 flake8
 pandas
 psycopg2-binary
+openpyxl
