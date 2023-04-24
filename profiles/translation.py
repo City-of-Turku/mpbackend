@@ -1,6 +1,6 @@
 from modeltranslation.translator import TranslationOptions, translator
 
-from profiles.models import Result, Option, OptionGroup, Question
+from profiles.models import Option, Question, Result, SubQuestion
 
 
 class QuestionTranslationOptions(TranslationOptions):
@@ -13,14 +13,14 @@ class QuestionTranslationOptions(TranslationOptions):
 translator.register(Question, QuestionTranslationOptions)
 
 
-class OptionGroupTranslationOptions(TranslationOptions):
+class SubQuestionTranslationOptions(TranslationOptions):
     fields = (
         "description",
         "additional_description",
     )
 
 
-translator.register(OptionGroup, OptionGroupTranslationOptions)
+translator.register(SubQuestion, SubQuestionTranslationOptions)
 
 
 class OptionTranslationOptions(TranslationOptions):
