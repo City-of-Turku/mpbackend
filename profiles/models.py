@@ -33,14 +33,14 @@ class Option(models.Model):
     option_groups = models.ForeignKey(
         "OptionGroup", related_name="options", on_delete=models.CASCADE, null=True
     )
-    animals = models.ManyToManyField("Animal", related_name="options")
+    results = models.ManyToManyField("Result", related_name="options")
     question_condition = models.ForeignKey(
         "QuestionCondition", related_name="options", on_delete=models.CASCADE, null=True
     )
 
 
-class Animal(models.Model):
-    name = models.CharField(max_length=64, null=True)
+class Result(models.Model):
+    value = models.CharField(max_length=64, null=True)
     description = models.TextField(null=True)
 
 
@@ -60,8 +60,8 @@ class User(models.Model):
     first_name = models.CharField(max_length=128)
     last_name = models.CharField(max_length=128)
     created = models.DateTimeField(auto_now_add=True)
-    animal = models.ForeignKey(
-        "Animal", related_name="users", null=True, on_delete=models.CASCADE
+    result = models.ForeignKey(
+        "Result", related_name="users", null=True, on_delete=models.CASCADE
     )
     email = models.EmailField(unique=True)
     gender = models.CharField(max_length=2, choices=GENDER_OPTIONS, blank=True)
