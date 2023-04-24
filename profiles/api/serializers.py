@@ -1,12 +1,12 @@
 from rest_framework import serializers
 
 from profiles.models import (
-    Result,
     Answer,
     Option,
-    OptionGroup,
     Question,
     QuestionCondition,
+    Result,
+    SubQuestion,
 )
 
 
@@ -27,9 +27,9 @@ class OptionSerializer(serializers.ModelSerializer):
         return representation
 
 
-class OptionGroupSerializer(serializers.ModelSerializer):
+class SubQuestionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = OptionGroup
+        model = SubQuestion
         fields = "__all__"
 
     def to_representation(self, obj):

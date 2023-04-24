@@ -1,21 +1,21 @@
 from rest_framework import viewsets
 
 from profiles.models import (
-    Result,
     Answer,
     Option,
-    OptionGroup,
     Question,
     QuestionCondition,
+    Result,
+    SubQuestion,
 )
 
 from .serializers import (
-    ResultSerializer,
     AnswerSerializer,
-    OptionGroupSerializer,
     OptionSerializer,
     QuestionConditionSerializer,
     QuestionSerializer,
+    ResultSerializer,
+    SubQuestionSerializer,
 )
 
 all_views = []
@@ -52,12 +52,12 @@ class OptionViewSet(viewsets.ReadOnlyModelViewSet):
 register_view(OptionViewSet, "option")
 
 
-class OptionGroupViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = OptionGroup.objects.all()
-    serializer_class = OptionGroupSerializer
+class SubQuestionViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = SubQuestion.objects.all()
+    serializer_class = SubQuestionSerializer
 
 
-register_view(OptionGroupViewSet, "optiongroup")
+register_view(SubQuestionViewSet, "subquestion")
 
 
 class ResultViewSet(viewsets.ReadOnlyModelViewSet):
