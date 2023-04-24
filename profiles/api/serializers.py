@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from profiles.models import (
-    Animal,
+    Result,
     Answer,
     Option,
     OptionGroup,
@@ -10,9 +10,9 @@ from profiles.models import (
 )
 
 
-class AnimalSerializer(serializers.ModelSerializer):
+class ResultSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Animal
+        model = Result
         fields = "__all__"
 
 
@@ -23,7 +23,7 @@ class OptionSerializer(serializers.ModelSerializer):
 
     def to_representation(self, obj):
         representation = super().to_representation(obj)
-        representation["animals"] = AnimalSerializer(obj.animals, many=True).data
+        representation["results"] = ResultSerializer(obj.results, many=True).data
         return representation
 
 

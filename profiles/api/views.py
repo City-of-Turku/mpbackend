@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 
 from profiles.models import (
-    Animal,
+    Result,
     Answer,
     Option,
     OptionGroup,
@@ -10,7 +10,7 @@ from profiles.models import (
 )
 
 from .serializers import (
-    AnimalSerializer,
+    ResultSerializer,
     AnswerSerializer,
     OptionGroupSerializer,
     OptionSerializer,
@@ -60,12 +60,12 @@ class OptionGroupViewSet(viewsets.ReadOnlyModelViewSet):
 register_view(OptionGroupViewSet, "optiongroup")
 
 
-class AnimalViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Animal.objects.all()
-    serializer_class = AnimalSerializer
+class ResultViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Result.objects.all()
+    serializer_class = ResultSerializer
 
 
-register_view(AnimalViewSet, "animal")
+register_view(ResultViewSet, "result")
 
 
 class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
