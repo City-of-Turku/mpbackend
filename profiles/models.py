@@ -16,11 +16,11 @@ class Question(models.Model):
     )
 
 
-class OptionGroup(models.Model):
+class SubQuestion(models.Model):
     description = models.CharField(max_length=255, null=True)
     additional_description = models.CharField(max_length=255, null=True)
     question = models.ForeignKey(
-        "Question", related_name="option_groups", null=True, on_delete=models.CASCADE
+        "Question", related_name="sub_questions", null=True, on_delete=models.CASCADE
     )
 
 
@@ -30,8 +30,8 @@ class Option(models.Model):
     question = models.ForeignKey(
         "Question", related_name="options", on_delete=models.CASCADE, null=True
     )
-    option_groups = models.ForeignKey(
-        "OptionGroup", related_name="options", on_delete=models.CASCADE, null=True
+    sub_question = models.ForeignKey(
+        "SubQuestion", related_name="options", on_delete=models.CASCADE, null=True
     )
     results = models.ManyToManyField("Result", related_name="options")
     question_condition = models.ForeignKey(
