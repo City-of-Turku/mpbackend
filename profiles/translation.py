@@ -1,6 +1,6 @@
 from modeltranslation.translator import TranslationOptions, translator
 
-from profiles.models import Animal, Option, OptionGroup, Question
+from profiles.models import Result, Option, OptionGroup, Question
 
 
 class QuestionTranslationOptions(TranslationOptions):
@@ -30,8 +30,8 @@ class OptionTranslationOptions(TranslationOptions):
 translator.register(Option, OptionTranslationOptions)
 
 
-class AnimalTranslationOptions(TranslationOptions):
-    fields = ("name", "description")
+class ResultTranslationOptions(TranslationOptions):
+    fields = ("value", "description")
 
 
-translator.register(Animal, AnimalTranslationOptions)
+translator.register(Result, ResultTranslationOptions)
