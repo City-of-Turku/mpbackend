@@ -45,7 +45,13 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     def to_representation(self, obj):
         representation = super().to_representation(obj)
-        representation["options"] = OptionSerializer(obj.options, many=True).data
+        if obj.options.count() > 0:
+            representation["options"] = OptionSerializer(obj.options, many=True).data
+        elif obj.sub_questions.count() > 0:
+            representation["sub_questions"] = SubQuestionSerializer(
+                obj.sub_questions, many=True
+            ).data
+
         return representation
 
 
