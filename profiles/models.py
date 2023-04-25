@@ -14,6 +14,11 @@ class Question(models.Model):
         null=True,
         on_delete=models.CASCADE,
     )
+    number_of_choices = models.PositiveSmallIntegerField(default=1)
+    number_of_sub_question_choices = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        ordering = ["pk"]
 
 
 class SubQuestion(models.Model):
@@ -49,6 +54,7 @@ class Answer(models.Model):
     option = models.ForeignKey(
         "Option", related_name="answers", on_delete=models.CASCADE
     )
+    created = models.DateTimeField(auto_now_add=True)
 
 
 class User(models.Model):
