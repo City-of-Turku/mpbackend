@@ -27,6 +27,9 @@ if os.path.exists(env_file_path):
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
+# Custom user model
+AUTH_USER_MODEL = "account.User"
+
 # Application definition
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -39,6 +42,7 @@ INSTALLED_APPS = [
     "django_extensions",
     "modeltranslation",
     "profiles.apps.ProfilesConfig",
+    "account.apps.AccountConfig",
 ]
 
 MIDDLEWARE = [
