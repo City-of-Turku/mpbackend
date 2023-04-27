@@ -50,24 +50,10 @@ class Result(models.Model):
 
 
 class Answer(models.Model):
-    user = models.ForeignKey("User", related_name="answers", on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        "account.User", related_name="answers", on_delete=models.CASCADE
+    )
     option = models.ForeignKey(
         "Option", related_name="answers", on_delete=models.CASCADE
     )
     created = models.DateTimeField(auto_now_add=True)
-
-
-class User(models.Model):
-    GENDER_OPTIONS = [
-        ("M", "Male"),
-        ("F", "Female"),
-        ("NB", "Nonbinary"),
-    ]
-    first_name = models.CharField(max_length=128)
-    last_name = models.CharField(max_length=128)
-    created = models.DateTimeField(auto_now_add=True)
-    result = models.ForeignKey(
-        "Result", related_name="users", null=True, on_delete=models.CASCADE
-    )
-    email = models.EmailField(unique=True)
-    gender = models.CharField(max_length=2, choices=GENDER_OPTIONS, blank=True)
