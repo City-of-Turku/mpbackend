@@ -57,3 +57,10 @@ class Answer(models.Model):
         "Option", related_name="answers", on_delete=models.CASCADE
     )
     created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "option"], name="unique_user_and_option"
+            )
+        ]
