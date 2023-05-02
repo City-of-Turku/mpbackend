@@ -1,7 +1,8 @@
+from account.models import User
 from profiles.models import Answer, Result
 
 
-def get_user_result(user):
+def get_user_result(user: User) -> Result:
     answer_qs = Answer.objects.filter(user=user)
     if answer_qs.count() == 0:
         return None
