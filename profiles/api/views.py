@@ -1,13 +1,10 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user, login
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import (
-    AllowAny,
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+from account.models import User
 from profiles.models import (
     Answer,
     Option,
@@ -40,6 +37,46 @@ def register_view(klass, name, basename=None):
 class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
+
+    @action(
+        detail=False,
+        methods=["GET"],
+        permission_classes=[AllowAny],
+    )
+    def start_poll(self, request):
+        # TODO check recaptha
+        user = User.objects.order_by("-id").first()
+        if user:
+            next_id = user.id + 1
+        # Empty User table
+        else:
+            next_id = 1
+        password = User.objects.make_random_password()
+        username = f"anonymous_{next_id}"
+        user = User.objects.create(
+            username=username, password=password, is_generated=True
+        )
+
+        login(request, user)
+        # assert user.id == next_id
+        return Response(status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=["GET"],
+        permission_classes=[IsAuthenticated],
+    )
+    def get_question(self, request):
+        number = request.query_params.get("number", None)
+        question = Question.objects.get(number=number) # noqa F401       
+        breakpoint()
+
+    @action(
+        detail=False,
+        methods=["GET"],
+    )
+    def end_poll(self, request):
+        pass
 
 
 register_view(QuestionViewSet, "question")
@@ -86,18 +123,36 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             permission_classes = [AllowAny]
         else:
             permission_classes = [IsAuthenticated]
-        permission_classes = [AllowAny]
+        # permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
 
     def create(self, request, *args, **kwargs):
-        user_id = request.data.get("user", None)
         option_id = request.data.get("option", None)
-        if user_id and option_id:
-            user = get_user_model().objects.get(id=user_id)
-            option = Option.objects.get(id=option_id)
+        if option_id:
+            try:
+                option = Option.objects.get(id=option_id)
+            except Option.DoesNotExist:
+                return Response(
+                    f"Option {option_id} not found", status=status.HTTP_404_NOT_FOUND
+                )
+        else:
+            return Response(
+                "'option' argument not given", status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user = get_user(request)
         if user and option:
-            Answer.objects.create(user=user, option=option)
-            return Response("Created", status=status.HTTP_201_CREATED)
+            queryset = Answer.objects.filter(user=user, option=option)
+            if queryset.count() == 0:
+                Answer.objects.create(user=user, option=option)
+
+            else:
+                # Update existing answer
+                answer = queryset.first()
+                assert answer.user == user
+                answer.option = option
+                answer.save()
+            return Response(status=status.HTTP_201_CREATED)
         else:
             return Response("Not created", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -107,7 +162,7 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def get_result(self, request, *args, **kwargs):
-        user = request.user
+        user = get_user(request)
         if not user.is_authenticated:
             return Response(
                 "No authentication credentials were provided in the request.",
