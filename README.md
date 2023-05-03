@@ -1,2 +1,2 @@
 # mpbackend
-Mobility Platform backend
+Mobility Profile Backend
