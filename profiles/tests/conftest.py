@@ -12,16 +12,21 @@ def api_client():
 @pytest.mark.django_db
 @pytest.fixture
 def questions():
-    Question.objects.create(question="Do you use car?")
+    Question.objects.create(question="Do you use car?", number="1")
+    Question.objects.create(question="Do you use scooter?", number="2")
     return Question.objects.all()
 
 
 @pytest.mark.django_db
 @pytest.fixture
 def options(questions, results):
-    option_no = Option.objects.create(value="no", question=Question.objects.first())
+    option_no = Option.objects.create(
+        value="no", question=Question.objects.get(number="1")
+    )
     option_no.results.add(Result.objects.get(value="negative result"))
-    option_yes = Option.objects.create(value="yes", question=Question.objects.first())
+    option_yes = Option.objects.create(
+        value="yes", question=Question.objects.get(number="1")
+    )
     option_yes.results.add(Result.objects.get(value="positive result"))
     return Option.objects.all()
 
