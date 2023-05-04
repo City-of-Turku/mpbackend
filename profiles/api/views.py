@@ -1,10 +1,10 @@
-from django.contrib.auth import get_user, login
+from django.contrib.auth import get_user, login, logout
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from account.models import User
+from account.models import generate_password, User
 from profiles.models import (
     Answer,
     Option,
@@ -51,32 +51,48 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         # Empty User table
         else:
             next_id = 1
-        password = User.objects.make_random_password()
+        password = generate_password()
         username = f"anonymous_{next_id}"
+        # Todo salt password
         user = User.objects.create(
             username=username, password=password, is_generated=True
         )
-
         login(request, user)
-        # assert user.id == next_id
+        if user.id != next_id:
+            return Response(
+                "Invalid user id", status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
         return Response(status=status.HTTP_200_OK)
 
     @action(
         detail=False,
         methods=["GET"],
-        permission_classes=[IsAuthenticated],
     )
     def get_question(self, request):
         number = request.query_params.get("number", None)
-        question = Question.objects.get(number=number) # noqa F401       
-        breakpoint()
+        if number:
+            try:
+                question = Question.objects.get(number=number)
+            except Question.DoesNotExist:
+                return Response(
+                    f"question with number {number} not found",
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            serializer = QuestionSerializer(question)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        else:
+            return Response(
+                "'number' argument not given", status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(
         detail=False,
         methods=["GET"],
     )
     def end_poll(self, request):
-        pass
+        logout(request)
+        return Response(status=status.HTTP_200_OK)
 
 
 register_view(QuestionViewSet, "question")
@@ -170,7 +186,7 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             )
         result = get_user_result(user)
         serializer = ResultSerializer(result)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 register_view(AnswerViewSet, "answer")
