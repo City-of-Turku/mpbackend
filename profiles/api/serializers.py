@@ -55,6 +55,12 @@ class QuestionSerializer(serializers.ModelSerializer):
         return representation
 
 
+class QuestionNumberSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = ["id", "number"]
+
+
 class QuestionConditionSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionCondition
