@@ -4,6 +4,12 @@ from rest_framework import serializers
 from account.models import Profile
 
 
+class PublicUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ["id"]
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
