@@ -6,6 +6,7 @@ class QuestionCondition(models.Model):
 
 
 class Question(models.Model):
+    number = models.CharField(max_length=3, null=True)
     question = models.CharField(max_length=255, null=True)
     description = models.CharField(max_length=255, null=True)
     question_condition = models.OneToOneField(
