@@ -4,7 +4,17 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from account.models import generate_password, User
+from account.api.serializers import PublicUserSerializer
+from account.models import User
+from profiles.api.serializers import (
+    AnswerSerializer,
+    OptionSerializer,
+    QuestionConditionSerializer,
+    QuestionNumberSerializer,
+    QuestionSerializer,
+    ResultSerializer,
+    SubQuestionSerializer,
+)
 from profiles.models import (
     Answer,
     Option,
@@ -13,16 +23,7 @@ from profiles.models import (
     Result,
     SubQuestion,
 )
-from profiles.utils import get_user_result
-
-from .serializers import (
-    AnswerSerializer,
-    OptionSerializer,
-    QuestionConditionSerializer,
-    QuestionSerializer,
-    ResultSerializer,
-    SubQuestionSerializer,
-)
+from profiles.utils import generate_password, get_user_result
 
 all_views = []
 
@@ -62,7 +63,18 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(
                 "Invalid user id", status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        return Response(status=status.HTTP_200_OK)
+        serializer = PublicUserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(
+        detail=False,
+        methods=["GET"],
+    )
+    def get_question_numbers(self, request):
+        queryset = Question.objects.all().order_by("number")
+        page = self.paginate_queryset(queryset)
+        serializer = QuestionNumberSerializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
     @action(
         detail=False,
@@ -139,7 +151,6 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             permission_classes = [AllowAny]
         else:
             permission_classes = [IsAuthenticated]
-        # permission_classes = [AllowAny]
         return [permission() for permission in permission_classes]
 
     def create(self, request, *args, **kwargs):
