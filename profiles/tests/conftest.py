@@ -13,7 +13,9 @@ def api_client():
 @pytest.fixture
 def questions():
     Question.objects.create(question="Do you use car?", number="1")
+    Question.objects.create(question="How often do you use car?", number="1b")
     Question.objects.create(question="Do you use scooter?", number="2")
+    Question.objects.create(question="How often do you use scooter?", number="2b")
     return Question.objects.all()
 
 
