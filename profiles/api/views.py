@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user, login, logout
+from django.contrib.auth.hashers import make_password
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -52,9 +53,8 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         # Empty User table
         else:
             next_id = 1
-        password = generate_password()
+        password = make_password(generate_password())
         username = f"anonymous_{next_id}"
-        # Todo salt password
         user = User.objects.create(
             username=username, password=password, is_generated=True
         )
