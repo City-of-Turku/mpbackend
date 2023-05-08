@@ -4,11 +4,16 @@ from django.db import models
 
 
 class User(AbstractUser):
-    created = models.DateTimeField(auto_now_add=True)
     result = models.ForeignKey(
-        "profiles.Result", related_name="users", null=True, on_delete=models.CASCADE
+        "profiles.Result",
+        related_name="users",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
     )
     email_verified = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    is_generated = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         """Makes email lowercase always"""
