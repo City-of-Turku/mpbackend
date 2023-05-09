@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth import get_user, login, logout
 from django.contrib.auth.hashers import make_password
 from rest_framework import status, viewsets
@@ -47,22 +48,13 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     )
     def start_poll(self, request):
         # TODO check recaptha
-        user = User.objects.order_by("-id").first()
-        if user:
-            next_id = user.id + 1
-        # Empty User table
-        else:
-            next_id = 1
+        uuid4 = uuid.uuid4()
+        username = f"anonymous_{str(uuid4)}"
+        user = User.objects.create(pk=uuid4, username=username)       
         password = make_password(generate_password())
-        username = f"anonymous_{next_id}"
-        user = User.objects.create(
-            username=username, password=password, is_generated=True
-        )
-        login(request, user)
-        if user.id != next_id:
-            return Response(
-                "Invalid user id", status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        user.password = password
+        user.save()
+        login(request, user)        
         serializer = PublicUserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -104,7 +96,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     )
     def end_poll(self, request):
         logout(request)
-        return Response(status=status.HTTP_200_OK)
+        return Response("Poll ended, user logged out.",status=status.HTTP_200_OK)
 
 
 register_view(QuestionViewSet, "question")
@@ -172,7 +164,6 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = Answer.objects.filter(user=user, option=option)
             if queryset.count() == 0:
                 Answer.objects.create(user=user, option=option)
-
             else:
                 # Update existing answer
                 answer = queryset.first()
