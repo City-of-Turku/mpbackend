@@ -16,6 +16,11 @@ env = environ.Env(
     LANGUAGES=(list, ["fi", "sv", "en"]),
     DATABASE_URL=(str, "postgis:///servicemap"),
     ALLOWED_HOSTS=(list, []),
+    EMAIL_BACKEND=(str, None),
+    EMAIL_HOST=(str, None),
+    EMAIL_HOST_USER=(str, None),
+    EMAIL_PORT=(int, None),
+    EMAIL_USE_TLS=(bool, None),
 )
 # WARN about env file not being preset. Here we pre-empt it.
 env_file_path = os.path.join(BASE_DIR, CONFIG_FILE_NAME)
@@ -183,3 +188,9 @@ LOGGING = {
         "profiles": {"handlers": ["console"], "level": "DEBUG"},
     },
 }
+
+EMAIL_BACKEND = env("EMAIL_BACKEND")
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_USE_TLS = env("EMAIL_USE_TLS")
