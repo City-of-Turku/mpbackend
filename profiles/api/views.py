@@ -1,4 +1,5 @@
 import uuid
+
 from django.contrib.auth import get_user, login, logout
 from django.contrib.auth.hashers import make_password
 from rest_framework import status, viewsets
@@ -50,11 +51,11 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         # TODO check recaptha
         uuid4 = uuid.uuid4()
         username = f"anonymous_{str(uuid4)}"
-        user = User.objects.create(pk=uuid4, username=username)       
+        user = User.objects.create(pk=uuid4, username=username)
         password = make_password(generate_password())
         user.password = password
         user.save()
-        login(request, user)        
+        login(request, user)
         serializer = PublicUserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -96,7 +97,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     )
     def end_poll(self, request):
         logout(request)
-        return Response("Poll ended, user logged out.",status=status.HTTP_200_OK)
+        return Response("Poll ended, user logged out.", status=status.HTTP_200_OK)
 
 
 register_view(QuestionViewSet, "question")
