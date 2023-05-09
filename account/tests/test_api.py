@@ -16,7 +16,7 @@ def test_email_verify(api_client):
     response = api_client.get(url)
     assert response.status_code == 403
     url = reverse("profiles:question-start-poll")
-    response = api_client.get(url)
+    response = api_client.post(url)
     assert response.status_code == 200
     assert User.objects.all().count() == 1
     uid = response.json()["id"]
@@ -44,6 +44,9 @@ def test_email_verify(api_client):
     assert response.status_code == 200
     user = User.objects.get(pk=uid)
     assert user.email_verified is True
+    # Try to use the same token
+    response = api_client.post(url, {"uid": uid, "token": token})
+    assert response.status_code == 400
     # Nonexisting uid and token values
     response = api_client.post(url, {"uid": uuid.uuid4(), "token": "foobar"})
     assert response.status_code == 400
