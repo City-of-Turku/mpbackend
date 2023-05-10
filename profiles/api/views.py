@@ -8,7 +8,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from account.api.serializers import PublicUserSerializer
-from account.models import User
+from account.models import Profile, User
 from profiles.api.serializers import (
     AnswerSerializer,
     OptionSerializer,
@@ -44,7 +44,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(
         detail=False,
-        methods=["GET"],
+        methods=["POST"],
         permission_classes=[AllowAny],
     )
     def start_poll(self, request):
@@ -54,6 +54,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         user = User.objects.create(pk=uuid4, username=username)
         password = make_password(generate_password())
         user.password = password
+        user.profile = Profile.objects.create(user=user)
         user.save()
         login(request, user)
         serializer = PublicUserSerializer(user)
@@ -91,10 +92,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
                 "'number' argument not given", status=status.HTTP_400_BAD_REQUEST
             )
 
-    @action(
-        detail=False,
-        methods=["GET"],
-    )
+    @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
     def end_poll(self, request):
         logout(request)
         return Response("Poll ended, user logged out.", status=status.HTTP_200_OK)
@@ -168,7 +166,6 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             else:
                 # Update existing answer
                 answer = queryset.first()
-                assert answer.user == user
                 answer.option = option
                 answer.save()
             return Response(status=status.HTTP_201_CREATED)
