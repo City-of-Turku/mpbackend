@@ -17,7 +17,7 @@ def test_poll(api_client, questions, options, results):
     # Test poll start
     User.objects.all().count() == 0
     url = reverse("profiles:question-start-poll")
-    response = api_client.get(url)
+    response = api_client.post(url)
     assert response.status_code == 200
     User.objects.all().count() == 1
     # Test answer
@@ -35,7 +35,7 @@ def test_poll(api_client, questions, options, results):
     assert response.json()["value"] == "negative result"
     # Test end poll (logout)
     url = reverse("profiles:question-end-poll")
-    response = api_client.get(url)
+    response = api_client.post(url)
     assert response.status_code == 200
     url = reverse("profiles:answer-list")
     # should return 403 Forbidden
