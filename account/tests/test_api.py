@@ -50,3 +50,25 @@ def test_email_verify(api_client):
     # Nonexisting uid and token values
     response = api_client.post(url, {"uid": uuid.uuid4(), "token": "foobar"})
     assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_profile(api_client):
+    url = reverse("profiles:question-start-poll")
+    response = api_client.post(url)
+    assert response.status_code == 200
+    assert User.objects.all().count() == 1
+    user = User.objects.first()
+    assert user.profile.postal_code is None
+    # Test update profile
+    url = reverse("account:profiles-detail", args=[user.id])
+    response = api_client.put(url, {"postal_code": "20210"})
+    assert response.status_code == 201
+    user = User.objects.first()
+    assert user.profile.postal_code == "20210"
+    url = reverse("profiles:question-end-poll")
+    response = api_client.post(url)
+    # Test update after logout (end-poll)
+    url = reverse("account:profiles-detail", args=[user.id])
+    response = api_client.put(url, {"postal_code": "20210"})
+    assert response.status_code == 403
