@@ -1,7 +1,7 @@
 import datetime
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user, get_user_model
 # from django.contrib.auth import authenticate, login
 # from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
@@ -17,6 +17,8 @@ from account.models import Profile
 
 from .serializers import ProfileSerializer
 
+all_views = []
+
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all().select_related("user").order_by("id")
@@ -24,11 +26,35 @@ class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
 
     def get_permissions(self):
-        if self.action in ["register", "login", "email_verify_confirm"]:
+        if self.action in ["email_verify_confirm"]:
             permission_classes = [AllowAny]
         else:
             permission_classes = [IsAuthenticated]
+
         return [permission() for permission in permission_classes]
+
+    def update(self, request, *args, **kwargs):
+        user = get_user(request)
+        instance = user.profile
+        serializer = self.serializer_class(
+            instance=instance, data=request.data, partial=True
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        detail=False,
+        methods=["POST"],
+        permission_classes=[IsAuthenticated],
+    )
+    def save_email(self, request):
+        """
+        Endpoint to store users email.
+
+        """
 
     @action(
         detail=False,
@@ -36,6 +62,9 @@ class ProfileViewSet(viewsets.ModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def email_verify_request(self, request, *args, **kwargs):
+        """
+        Endpoint to send email verfication email.
+        """
         email = request.query_params.get("email", None)
         user = request.user
         if not email:
@@ -68,11 +97,16 @@ class ProfileViewSet(viewsets.ModelViewSet):
         user_model = get_user_model()
         try:
             user = user_model.objects.get(pk=uid)
-        except (TypeError, ValueError, ValidationError, user_model.DoesNotExist):
+        except (
+            TypeError,
+            ValueError,
+            OverflowError,
+            ValidationError,
+            user_model.DoesNotExist,
+        ):
             return Response(
                 "Email verification unsuccessful.", status=status.HTTP_400_BAD_REQUEST
             )
-
         if default_token_generator.check_token(user, token):
             user.email_verified = True
             # Invalidate used token by modifying user's last_login
@@ -140,3 +174,6 @@ class ProfileViewSet(viewsets.ModelViewSet):
     #             return HttpResponse("Disabled account")
     #     else:
     #         return HttpResponse("User not found")
+
+
+all_views.append({"class": ProfileViewSet, "name": "profile"})
