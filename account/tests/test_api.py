@@ -26,8 +26,6 @@ def test_email_verify(api_client):
     url = reverse("account:profiles-email-verify-request") + f"?email={test_email}"
     response = api_client.get(url)
     assert response.status_code == 200
-    user = User.objects.get(pk=uid)
-    assert user.email == test_email
     assert len(mail.outbox) == 1
     verify_msg = None
     for msg in mail.outbox:
@@ -50,6 +48,22 @@ def test_email_verify(api_client):
     # Nonexisting uid and token values
     response = api_client.post(url, {"uid": uuid.uuid4(), "token": "foobar"})
     assert response.status_code == 400
+    # Test save email
+    user = User.objects.get(pk=uid)
+    assert user.email is None
+    url = reverse("account:profiles-save-email")
+    response = api_client.post(url, {"email": test_email})
+    assert response.status_code == 201
+    user = User.objects.get(pk=uid)
+    assert user.email == test_email
+    # Test duplicate email
+    url = reverse("profiles:question-end-poll")
+    response = api_client.post(url)
+    url = reverse("profiles:question-start-poll")
+    response = api_client.post(url)
+    url = reverse("account:profiles-save-email")
+    response = api_client.post(url, {"email": test_email})
+    assert response.status_code == 409
 
 
 @pytest.mark.django_db
