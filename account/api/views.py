@@ -13,7 +13,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from account.models import Profile
+from account.models import Profile, User
 
 from .serializers import ProfileSerializer
 
@@ -55,6 +55,19 @@ class ProfileViewSet(viewsets.ModelViewSet):
         Endpoint to store users email.
 
         """
+        user = get_user(request)
+        email = request.data.get("email", None)
+        if not email:
+            return Response(
+                "No 'email' provided in body.", status=status.HTTP_400_BAD_REQUEST
+            )
+        if User.objects.filter(email=email).count() > 0:
+            return Response(
+                f"Email {email} already exists", status=status.HTTP_409_CONFLICT
+            )
+        user.email = email
+        user.save()
+        return Response("Email saved", status=status.HTTP_201_CREATED)
 
     @action(
         detail=False,
@@ -66,15 +79,15 @@ class ProfileViewSet(viewsets.ModelViewSet):
         Endpoint to send email verfication email.
         """
         email = request.query_params.get("email", None)
-        user = request.user
         if not email:
             return Response(
                 "No email supplied in request parameters.",
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        else:
-            user.email = email
-            user.save()
+        user = get_user(request)
+        if not user:
+            return Response("User not found.", status=status.HTTP_404_NOT_FOUND)
+
         # Send email with uid and token
         uid = user.id
         token = default_token_generator.make_token(user)
