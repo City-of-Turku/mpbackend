@@ -7,6 +7,8 @@ from django.db import models
 
 class User(AbstractUser):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
+    email = models.EmailField(unique=True, blank=True, null=True)
+
     result = models.ForeignKey(
         "profiles.Result",
         related_name="users",
@@ -20,7 +22,8 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         """Makes email lowercase always"""
-        self.email = self.email.lower()
+        if self.email:
+            self.email = self.email.lower() if len(self.email) > 0 else self.email
         super(User, self).save(*args, **kwargs)
 
     class Meta:
