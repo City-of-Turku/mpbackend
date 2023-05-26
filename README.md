@@ -1,16 +1,28 @@
 # Mobility Profile Backend
 This is the backend for the Mobility Profile
 
+## Installation with Docker Compose
+First configure development environment settings as stated in `config_dev.env.example`.
+
+### Running the application
+Run application with `docker-compose up`
+This will startup and bind local postgres and mobilityprofile backend.
+
+### Importing questions
+To import questions run: `docker-compose run mpbackend import_questions`
+
+
 ## Installation without Docker
 1.
 First, install the necessary Debian packages.
 TODO, add packages.
 
 2. Clone the repository.
+```
 git clone https://github.com/City-of-Turku/mpbackend.git
-
+```
 3. Install pip requiremends
-Be sure to load the environment before installing the requirements.
+Be sure to load the **environment** before installing the requirements.
 ```
 pip-install pip-tools
 pip install -r requirements.txt
