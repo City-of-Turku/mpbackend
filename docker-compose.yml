@@ -1,0 +1,39 @@
+version: '3.4'
+
+services:
+    postgres:
+        build: ./docker/postgres/
+        environment:
+            - POSTGRES_USER=mobilityprofile
+            - POSTGRES_PASSWORD=mobilityprofile
+            - POSTGRES_DB=mobilityprofile
+        ports:
+            - "5432:5432"
+        volumes:
+            - ./postgres-data:/var/lib/postgresql/data        
+
+    mpbackend:
+        image: mpbackend
+        build:
+            context: .
+            dockerfile: ./docker/Dockerfile    
+        ports:
+        - 8000:8000
+        environment:   
+            - APPLY_MIGRATIONS=true
+        command: start_django_development_server
+        env_file:
+            - config_dev.env
+        volumes:
+            - django-media:/var/media/
+        #    - mpbackend:/mpbackend/
+        
+        restart: on-failure
+        depends_on:
+            postgres:
+                condition: service_started
+
+volumes:
+    postgres-data:
+    django-media:
+
