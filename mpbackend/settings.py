@@ -21,6 +21,10 @@ env = environ.Env(
     EMAIL_HOST_USER=(str, None),
     EMAIL_PORT=(int, None),
     EMAIL_USE_TLS=(bool, None),
+    MEDIA_ROOT=(environ.Path(), root("media")),
+    STATIC_ROOT=(environ.Path(), root("static")),
+    MEDIA_URL=(str, "/media/"),
+    STATIC_URL=(str, "/static/"),
 )
 # WARN about env file not being preset. Here we pre-empt it.
 env_file_path = os.path.join(BASE_DIR, CONFIG_FILE_NAME)
@@ -132,8 +136,11 @@ USE_L10N = True
 USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-STATIC_URL = "static/"
+# Static & Media files
+STATIC_ROOT = env("STATIC_ROOT")
+STATIC_URL = env("STATIC_URL")
+MEDIA_ROOT = env("MEDIA_ROOT")
+MEDIA_URL = env("MEDIA_URL")
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
