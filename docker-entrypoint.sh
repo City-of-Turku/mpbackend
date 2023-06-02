@@ -14,18 +14,14 @@ if [ "$DJANGO_SUPERUSER_USERNAME" ]; then
 fi
 
 if [ "$1" = 'start_django_development_server' ]; then
-    # Start server
+    # Start django develpoment server
     echo "Starting development server."
     ./manage.py runserver 0.0.0.0:8000
 elif [ "$1" = 'import_questions' ]; then
     echo "Importing questions..."
     ./manage.py import_questions
-else
-    exec uwsgi --plugin http,python3 --master --http :8000 \
-               --processes 4 --threads 1 \
-               --need-app \
-               --mount ${URL_PREFIX:-/}=mpbackend/wsgi.py \
-               --manage-script-name \
-               --die-on-term \
-               --strict
+elif [ "$1" = 'start_production_server' ]; then
+    echo "Starting production server..."
+    exec uwsgi --ini deploy/docker_uwsgi.ini
 fi
+
