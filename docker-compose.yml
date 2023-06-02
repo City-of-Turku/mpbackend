@@ -16,24 +16,23 @@ services:
         image: mpbackend
         build:
             context: .
-            dockerfile: ./docker/Dockerfile    
+            dockerfile: ./docker/mpbackend/Dockerfile   
+            args:
+                - REQUIREMENTS_FILE=requirements.txt
         ports:
-        - 8000:8000
+            - 8000:8000
         environment:   
             - APPLY_MIGRATIONS=true
         command: start_django_development_server
         env_file:
             - config_dev.env
         volumes:
-            - django-media:/var/media/
-        #    - mpbackend:/mpbackend/
-        
+           - mpbackend:/mpbackend
+          
         restart: on-failure
         depends_on:
             postgres:
-                condition: service_started
-
+                condition: service_started    
 volumes:
     postgres-data:
-    django-media:
-
+    mpbackend:
