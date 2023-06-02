@@ -22,7 +22,7 @@ services:
             - nginx_network
         
         volumes:
-            - app:/app          
+            - mpbackend:/mpbackend          
 networks:
   nginx_network:
     driver: bridge
