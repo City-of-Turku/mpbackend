@@ -10,12 +10,13 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
-
+ENV STATIC_ROOT=/mpbackend/static
+ENV STATIC_URL=/static/
 # tzdata installation requires settings frontend
 RUN apt-get update && \
     TZ="Europe/Helsinki" DEBIAN_FRONTEND=noninteractive apt-get install -y python3-pip gdal-bin
 ARG REQUIREMENTS_FILE
-COPY . /mpbackend
+COPY . .
 # Install pip requirements
 RUN python -m pip install -r ${REQUIREMENTS_FILE}
 RUN python manage.py collectstatic --no-input
