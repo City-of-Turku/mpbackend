@@ -7,7 +7,8 @@ services:
             args:
                 - REQUIREMENTS_FILE=./deploy/requirements.txt
         environment:   
-            - APPLY_MIGRATIONS=true
+            - DEBUG=false
+        
         command: start_production_server
        
     nginx:
@@ -22,10 +23,13 @@ services:
             - nginx_network
         
         volumes:
-            - mpbackend:/mpbackend          
+            - mpbackend:/mpbackend 
+            - static:/usr/share/nginx/html
 networks:
   nginx_network:
     driver: bridge
 
 
+volumes:
+    static:
 
