@@ -24,11 +24,10 @@ services:
         
         volumes:
             - mpbackend:/mpbackend 
-            - static:/usr/share/nginx/html
+            - static:/mpbackend/static
 networks:
   nginx_network:
     driver: bridge
-
 
 volumes:
     static:
