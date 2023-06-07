@@ -2,11 +2,14 @@
 This is the backend for the Mobility Profile
 
 ## Installation with Docker Compose
-First configure development environment settings as stated in `config_dev.env.example`.
+First configure development environment settings as stated in `config_dev.env.example`. 
 
 ### Running the application
 Run application with `docker-compose up`
-This will startup and bind local postgres and mobilityprofile backend.
+This will startup and bind local postgres and mobilityprofile backend. 
+
+### Runnig the application in production
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
 
 ### Importing questions
 To import questions run: `docker-compose run mpbackend import_questions`
