@@ -88,6 +88,10 @@ REST_FRAMEWORK = {
     ],
     "DEFAULT_PAGINATION_CLASS": "profiles.api_pagination.Pagination",
     "PAGE_SIZE": 10,
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "profiles.api.renderers.CustomBrowsableAPIRenderer",
+    ],
 }
 
 WSGI_APPLICATION = "mpbackend.wsgi.application"
