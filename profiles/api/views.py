@@ -1,7 +1,9 @@
 import uuid
 
+from django.conf import settings
 from django.contrib.auth import get_user, login, logout
 from django.contrib.auth.hashers import make_password
+from django.utils.module_loading import import_string
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -28,6 +30,10 @@ from profiles.models import (
 )
 from profiles.utils import generate_password, get_user_result
 
+DEFAULT_RENDERERS = [
+    import_string(renderer_module)
+    for renderer_module in settings.REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"]
+]
 all_views = []
 
 
@@ -41,6 +47,7 @@ def register_view(klass, name, basename=None):
 class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
+    renderer_classes = DEFAULT_RENDERERS
 
     @action(
         detail=False,
@@ -136,6 +143,7 @@ register_view(ResultViewSet, "result")
 class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Answer.objects.all()
     serializer_class = AnswerSerializer
+    renderer_classes = DEFAULT_RENDERERS
 
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
