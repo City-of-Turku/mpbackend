@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "modeltranslation",
     "profiles.apps.ProfilesConfig",
     "account.apps.AccountConfig",
+    "drf_spectacular",
 ]
 
 MIDDLEWARE = [
@@ -82,6 +83,21 @@ TEMPLATES = [
     },
 ]
 
+
+# DOC_ENDPOINTS = [
+#     "/api/v1/question/",
+# ]
+
+
+# def preprocessing_filter_spec(endpoints):
+#     filtered = []
+#     for endpoint in DOC_ENDPOINTS:
+#         # breakpoint()
+#         for path, path_regex, method, callback in endpoints:
+#             if path.startswith(endpoint):
+#                 filtered.append((path, path_regex, method, callback))
+#     return filtered
+
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticatedOrReadOnly"
@@ -92,6 +108,7 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
         "profiles.api.renderers.CustomBrowsableAPIRenderer",
     ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 WSGI_APPLICATION = "mpbackend.wsgi.application"
@@ -205,3 +222,12 @@ EMAIL_HOST = env("EMAIL_HOST")
 EMAIL_HOST_USER = env("EMAIL_HOST_USER")
 EMAIL_PORT = env("EMAIL_PORT")
 EMAIL_USE_TLS = env("EMAIL_USE_TLS")
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Mobility Profile API",
+    "DESCRIPTION": "Your project description",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    # OTHER SETTINGS
+    "PREPROCESSING_HOOKS": ["mpbackend.excluded_path.preprocessing_filter_spec"],
+}
