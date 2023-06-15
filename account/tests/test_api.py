@@ -73,6 +73,7 @@ def test_profile(api_client):
     assert response.status_code == 200
     assert User.objects.all().count() == 1
     user = User.objects.first()
+    assert user.is_generated is True
     assert user.profile.postal_code is None
     # Test update profile
     url = reverse("account:profiles-detail", args=[user.id])
