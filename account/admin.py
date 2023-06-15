@@ -15,6 +15,4 @@ class ProfileAdmin(admin.ModelAdmin):
             return None
 
 
-#     #fields = ("user", "gender", "result",)
-
 admin.site.register(Profile, ProfileAdmin)
