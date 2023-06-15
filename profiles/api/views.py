@@ -58,7 +58,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         # TODO check recaptha
         uuid4 = uuid.uuid4()
         username = f"anonymous_{str(uuid4)}"
-        user = User.objects.create(pk=uuid4, username=username)
+        user = User.objects.create(pk=uuid4, username=username, is_generated=True)
         password = make_password(generate_password())
         user.password = password
         user.profile = Profile.objects.create(user=user)
