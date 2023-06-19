@@ -6,7 +6,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
-import account.api.urls
+# import account.api.urls
 import profiles.api.urls
 
 # router = routers.DefaultRouter()
@@ -33,7 +33,7 @@ import profiles.api.urls
 urlpatterns = [
     re_path("^admin/", admin.site.urls),
     # re_path(r"^api/v1/", include(router.urls)),
-    re_path(r"^api/account/", include(account.api.urls), name="account"),
+    # re_path(r"^api/account/", include(account.api.urls), name="account"),
     re_path(r"^api/v1/", include(profiles.api.urls), name="profiles"),
     path("api/v1/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
