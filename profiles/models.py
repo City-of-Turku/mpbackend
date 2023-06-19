@@ -19,7 +19,7 @@ class Question(models.Model):
     number_of_sub_question_choices = models.PositiveSmallIntegerField(default=1)
 
     class Meta:
-        ordering = ["pk"]
+        ordering = ["number"]
 
 
 class SubQuestion(models.Model):
@@ -28,6 +28,9 @@ class SubQuestion(models.Model):
     question = models.ForeignKey(
         "Question", related_name="sub_questions", null=True, on_delete=models.CASCADE
     )
+
+    class Meta:
+        ordering = ["question__number"]
 
 
 class Option(models.Model):
@@ -44,10 +47,16 @@ class Option(models.Model):
         "QuestionCondition", related_name="options", on_delete=models.CASCADE, null=True
     )
 
+    class Meta:
+        ordering = ["question__number", "sub_question__question__number"]
+
 
 class Result(models.Model):
     value = models.CharField(max_length=64, null=True)
     description = models.TextField(null=True)
+
+    class Meta:
+        ordering = ["id"]
 
 
 class Answer(models.Model):
@@ -65,3 +74,4 @@ class Answer(models.Model):
                 fields=["user", "option"], name="unique_user_and_option"
             )
         ]
+        ordering = ["id"]
