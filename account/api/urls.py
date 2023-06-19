@@ -6,7 +6,7 @@ from . import views
 app_name = "account"
 
 # Create a router and register our viewsets with it.
-router = routers.SimpleRouter()
+router = routers.DefaultRouter()
 router.register("profile", views.ProfileViewSet, "profiles")
 
 # The API URLs are now determined automatically by the router.
