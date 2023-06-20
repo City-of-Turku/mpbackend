@@ -7,7 +7,7 @@ from django.core.management import BaseCommand
 
 from profiles.models import Option, Question, Result, SubQuestion
 
-FILENAME = "prof2.xlsx"
+FILENAME = "questions.xlsx"
 IS_ANIMAL = 1
 
 LANGUAGES = [language[0] for language in settings.LANGUAGES]
