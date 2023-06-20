@@ -2,6 +2,7 @@
 
 DOC_ENDPOINTS = [
     "/api/v1/question/",
+    "/api/v1/answer/",
 ]
 
 
