@@ -24,10 +24,10 @@ TODO, add packages.
 ```
 git clone https://github.com/City-of-Turku/mpbackend.git
 ```
-3. Install pip requiremends
+3. Install python 3.10 and  pip requiremends
 Be sure to load the **environment** before installing the requirements.
 ```
-pip-install pip-tools
+pip install pip-tools
 pip install -r requirements.txt
 ```
 4. Setup the PostGIS database.
@@ -47,3 +47,7 @@ createdb -O mobilityprofile -T template1 -l fi_FI.UTF-8 -E utf8 mobilityprofile
 ./manage.py migrate
 ```
 
+6. Import questions
+```
+./manage.py import_questions
+```
