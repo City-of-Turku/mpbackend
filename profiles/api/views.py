@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user, login, logout
 from django.contrib.auth.hashers import make_password
 from django.utils.module_loading import import_string
+from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -13,6 +14,7 @@ from account.api.serializers import PublicUserSerializer
 from account.models import Profile, User
 from profiles.api.serializers import (
     AnswerSerializer,
+    CustomAnswerSerializer,
     OptionSerializer,
     QuestionConditionSerializer,
     QuestionNumberSerializer,
@@ -49,6 +51,14 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = QuestionSerializer
     renderer_classes = DEFAULT_RENDERERS
 
+    @extend_schema(
+        description="Start the Poll for a anonymous user. Creates a anonymous user and logs the user in."
+        " Returns the id of the user.",
+        parameters=[],
+        examples=None,
+        request=None,
+        responses={200: PublicUserSerializer},
+    )
     @action(
         detail=False,
         methods=["POST"],
@@ -67,6 +77,12 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = PublicUserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        description="Return the numbers of questions",
+        parameters=[],
+        examples=None,
+        responses={200: QuestionNumberSerializer},
+    )
     @action(
         detail=False,
         methods=["GET"],
@@ -99,6 +115,13 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
                 "'number' argument not given", status=status.HTTP_400_BAD_REQUEST
             )
 
+    @extend_schema(
+        description="Ends the poll for the user by logging out the user.",
+        parameters=[],
+        examples=None,
+        responses={200: None},
+        request=None,
+    )
     @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
     def end_poll(self, request):
         logout(request)
@@ -152,6 +175,21 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
 
+    @extend_schema(
+        description="Create an answer by posting the id of the option for the user that "
+        "is logged in by posting the id of option.",
+        request=CustomAnswerSerializer,
+        responses={
+            201: {
+                "description": "created",
+            },
+            400: {"description": "Option argument not given"},
+            404: {
+                "description": "Option not found",
+            },
+            500: {"description": "Not created, user not logged in."},
+        },
+    )
     def create(self, request, *args, **kwargs):
         option_id = request.data.get("option", None)
         if option_id:
@@ -180,6 +218,11 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return Response("Not created", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @extend_schema(
+        description="Return the result(animal) of the authenticated user",
+        examples=None,
+        responses={200: ResultSerializer},
+    )
     @action(
         detail=False,
         methods=["GET"],
