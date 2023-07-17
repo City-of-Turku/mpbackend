@@ -53,11 +53,13 @@ INSTALLED_APPS = [
     "profiles.apps.ProfilesConfig",
     "account.apps.AccountConfig",
     "drf_spectacular",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -83,20 +85,12 @@ TEMPLATES = [
     },
 ]
 
+CORS_ORIGIN_ALLOW_ALL = True
 
 # DOC_ENDPOINTS = [
 #     "/api/v1/question/",
 # ]
 
-
-# def preprocessing_filter_spec(endpoints):
-#     filtered = []
-#     for endpoint in DOC_ENDPOINTS:
-#         # breakpoint()
-#         for path, path_regex, method, callback in endpoints:
-#             if path.startswith(endpoint):
-#                 filtered.append((path, path_regex, method, callback))
-#     return filtered
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
