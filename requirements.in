@@ -13,3 +13,4 @@ pandas
 psycopg2-binary
 openpyxl
 drf-spectacular
+django-cors-headers
