@@ -55,6 +55,10 @@ class QuestionSerializer(serializers.ModelSerializer):
         return representation
 
 
+class CustomAnswerSerializer(serializers.Serializer):
+    option = serializers.IntegerField()
+
+
 class QuestionNumberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
