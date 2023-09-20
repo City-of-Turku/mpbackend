@@ -2,10 +2,11 @@ import logging
 from typing import Any
 
 import pandas as pd
+from django import db
 from django.conf import settings
 from django.core.management import BaseCommand
 
-from profiles.models import Option, Question, Result, SubQuestion
+from profiles.models import Option, Question, QuestionCondition, Result, SubQuestion
 
 logger = logging.getLogger(__name__)
 FILENAME = "questions.xlsx"
@@ -16,6 +17,7 @@ LANGUAGE_SEPARATOR = "/"
 QUESTION_NUMBER_COLUMN = 0
 QUESTION_COLUMN = 1
 NUMBER_OF_CHOICES_COLUMN = 2
+CONDITION_COLUMN = 3
 QUESTION_DESCRIPTION_COLUMN = 4
 SUB_QUESTION_COLUMN = 5
 SUB_QUESTION_DESCRIPTION_COLUMN = 7
@@ -62,8 +64,8 @@ def get_language_dict(data: str) -> dict:
     return d
 
 
+@db.transaction.atomic
 def get_and_create_results(data: pd.DataFrame) -> list:
-    # Result.objects.all().delete()
     results_to_delete = list(Result.objects.all().values_list("id", flat=True))
     num_created = 0
     columns = data.columns[9:15]
@@ -91,96 +93,146 @@ def get_and_create_results(data: pd.DataFrame) -> list:
 
         results.append(result)
     Result.objects.filter(id__in=results_to_delete).delete()
-
     logger.info(f"Created {num_created} Results")
     return results
+
+
+@db.transaction.atomic
+def create_conditions(row_data: str, question: Question):
+    # Hack as e.g. "7,1" in excel cell is interpreted as float even though it is formated to str in excel.
+    if type(row_data) != str:
+        row_data = str(row_data).replace(".", ",")
+    question_separator = ":"
+    option_separator = ","
+    question_sub_question_separator = "."
+    conditions = row_data.split(question_separator)
+    for cond in conditions:
+        if option_separator in cond:
+            question_subquestion, options = cond.split(option_separator)
+            options = options.split("-")
+        else:
+            question_subquestion = cond
+            options = []
+        tmp = question_subquestion.split(question_sub_question_separator)
+        question_number = tmp[0]
+        question_condition = Question.objects.get(number=question_number)
+        sub_question_condition = None
+        if len(tmp) == 2:
+            sub_question_order_number = tmp[1]
+            sub_question_condition = SubQuestion.objects.get(
+                question=question_condition, order_number=sub_question_order_number
+            )
+            options_qs = Option.objects.filter(
+                sub_question=sub_question_condition, order_number__in=options
+            )
+        else:
+            options_qs = Option.objects.filter(
+                question=question_condition, order_number__in=options
+            )
+
+        question_condition, created = QuestionCondition.objects.get_or_create(
+            question=question,
+            question_condition=question_condition,
+            sub_question_condition=sub_question_condition,
+        )
+        if created:
+            question_condition.option_conditions.add(*options_qs)
+
+
+@db.transaction.atomic
+def save_questions(excel_data: pd.DataFrame, results: list):
+    question = None
+    sub_question = None
+    sub_question_order_number = None
+    option_order_number = None
+    num_created = 0
+    questions_to_delete = list(Question.objects.all().values_list("id", flat=True))
+    for index, row_data in excel_data.iterrows():
+        # The end of the questions sheet includes questions that will not be imported.
+        if index > 214:
+            break
+        try:
+            question_number = str(row_data[QUESTION_NUMBER_COLUMN])
+        except TypeError:
+            continue
+        if question_number[0].isdigit():
+            questions = get_language_dict(row_data[QUESTION_COLUMN])
+            descriptions = get_language_dict(row_data[QUESTION_DESCRIPTION_COLUMN])
+            number_of_choices = row_data[NUMBER_OF_CHOICES_COLUMN]
+            if not number_of_choices:
+                number_of_choices = 1
+            filter = {
+                "number": question_number,
+                "number_of_choices": str(number_of_choices),
+            }
+            for lang in LANGUAGES:
+                filter[f"question_{lang}"] = questions[lang]
+                filter[f"description_{lang}"] = descriptions[lang]
+
+            queryset = Question.objects.filter(**filter)
+            if queryset.count() == 0:
+                question = Question.objects.create(**filter)
+                logger.info(f"Created question: {questions['fi']}")
+                num_created += 1
+            else:
+
+                logger.info(f"Found question: {questions['fi']}")
+                question = queryset.first()
+                id = queryset.first().id
+                if id in questions_to_delete:
+                    questions_to_delete.remove(id)
+            if row_data[CONDITION_COLUMN]:
+                create_conditions(row_data[CONDITION_COLUMN], question)
+            sub_question_order_number = 0
+            option_order_number = 0
+            sub_question = None
+
+        # Create SubQuestion
+        if question and row_data[SUB_QUESTION_COLUMN]:
+            logger.info(f"created sub question {row_data[SUB_QUESTION_COLUMN]}")
+            sub_question, _ = SubQuestion.objects.get_or_create(
+                question=question, order_number=sub_question_order_number
+            )
+            sub_question_order_number += 1
+            option_order_number = 0
+            q_str = row_data[SUB_QUESTION_COLUMN]
+            save_translated_field(sub_question, "description", get_language_dict(q_str))
+            desc_str = row_data[SUB_QUESTION_DESCRIPTION_COLUMN]
+            if desc_str:
+                save_translated_field(
+                    sub_question,
+                    "additional_description",
+                    get_language_dict(desc_str),
+                )
+
+        # Create option
+        if question or sub_question and row_data[OPTION_COLUMN]:
+            if sub_question:
+                option, _ = Option.objects.get_or_create(
+                    sub_question=sub_question, order_number=option_order_number
+                )
+            else:
+                option, _ = Option.objects.get_or_create(
+                    question=question, order_number=option_order_number
+                )
+            option_order_number += 1
+            val_str = row_data[OPTION_COLUMN]
+            save_translated_field(option, "value", get_language_dict(val_str))
+            for a_i, a_c in enumerate(RESULT_COLUMNS):
+                if row_data[a_c] == IS_ANIMAL:
+                    option.results.add(results[a_i])
+    Question.objects.filter(id__in=questions_to_delete).delete()
+    logger.info(f"Created {num_created} questions")
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
         # Question.objects.all().delete()
+        # QuestionCondition.objects.all().delete()
+        # Result.objects.all().delete()
+
         file_path = f"{get_root_dir()}/media/{FILENAME}"
         excel_data = pd.read_excel(file_path, sheet_name="Yhdistetty")
         excel_data = excel_data.fillna("").replace([""], [None])
         results = get_and_create_results(excel_data)
-        question = None
-        sub_question = None
-        sub_question_order_number = None
-        option_order_number = None
-        num_created = 0
-        questions_to_delete = list(Question.objects.all().values_list("id", flat=True))
-        for index, row_data in excel_data.iterrows():
-            if index > 216:
-                break
-            try:
-                question_number = str(row_data[QUESTION_NUMBER_COLUMN])
-            except TypeError:
-                continue
-            if question_number[0].isdigit():
-                questions = get_language_dict(row_data[QUESTION_COLUMN])
-                descriptions = get_language_dict(row_data[QUESTION_DESCRIPTION_COLUMN])
-                number_of_choices = row_data[NUMBER_OF_CHOICES_COLUMN]
-                if not number_of_choices:
-                    number_of_choices = 1
-                filter = {
-                    "number": question_number,
-                    "number_of_choices": str(number_of_choices),
-                }
-                for lang in LANGUAGES:
-                    filter[f"question_{lang}"] = questions[lang]
-                    filter[f"description_{lang}"] = descriptions[lang]
-
-                queryset = Question.objects.filter(**filter)
-                if queryset.count() == 0:
-                    question = Question.objects.create(**filter)
-                    logger.info(f"Created question: {questions['fi']}")
-                    num_created += 1
-                else:
-
-                    logger.info(f"Found question: {questions['fi']}")
-                    question = queryset.first()
-                    id = queryset.first().id
-                    if id in questions_to_delete:
-                        questions_to_delete.remove(id)
-                sub_question_order_number = 0
-                option_order_number = 0
-                sub_question = None
-
-            # Create SubQuestion
-            if question and row_data[SUB_QUESTION_COLUMN]:
-                logger.info(f"created sub question {row_data[SUB_QUESTION_COLUMN]}")
-                sub_question, _ = SubQuestion.objects.get_or_create(
-                    question=question, order_number=sub_question_order_number
-                )
-                sub_question_order_number += 1
-                option_order_number = 0
-                q_str = row_data[SUB_QUESTION_COLUMN]
-                save_translated_field(
-                    sub_question, "description", get_language_dict(q_str)
-                )
-                desc_str = row_data[SUB_QUESTION_DESCRIPTION_COLUMN]
-                if desc_str:
-                    save_translated_field(
-                        sub_question,
-                        "additional_description",
-                        get_language_dict(desc_str),
-                    )
-
-            # Create option
-            if question or sub_question and row_data[OPTION_COLUMN]:
-                if sub_question:
-                    option, _ = Option.objects.get_or_create(
-                        sub_question=sub_question, order_number=option_order_number
-                    )
-                else:
-                    option, _ = Option.objects.get_or_create(
-                        question=question, order_number=option_order_number
-                    )
-                option_order_number += 1
-                val_str = row_data[OPTION_COLUMN]
-                save_translated_field(option, "value", get_language_dict(val_str))
-                for a_i, a_c in enumerate(RESULT_COLUMNS):
-                    if row_data[a_c] == IS_ANIMAL:
-                        option.results.add(results[a_i])
-        Question.objects.filter(id__in=questions_to_delete).delete()
-        logger.info(f"Created {num_created} questions")
+        save_questions(excel_data, results)
