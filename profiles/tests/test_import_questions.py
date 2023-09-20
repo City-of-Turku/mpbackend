@@ -34,21 +34,13 @@ def test_import_questions():
 
     # Test questions
     assert Question.objects.count() == 20
-    assert Question.objects.filter(number="1b").count() == 3
-    assert (
-        Question.objects.filter(number="1b")[0].question_fi
-        == "Miksi et koskaan kulje autolla?"
-    )
-    assert (
-        Question.objects.filter(number="1b")[1].question_sv
-        == "Varför anväder du aldrig cykel eller elcykel?"
-    )
-    assert (
-        Question.objects.filter(number="1b")[2].question_en
-        == "Why do you never use public transport?"
-    )
-
+    # Test question without sub questions
+    question1b1 = Question.objects.get(number="1b1")
+    assert question1b1.question_fi == "Miksi et koskaan kulje autolla?"
+    assert question1b1.number_of_choices == "*"
+    # Test Sub questions
     question1 = Question.objects.get(number="1")
+    assert question1.number_of_choices == "1"
     assert question1.description_en[0:2] == "If"
     sub_q_qs = SubQuestion.objects.filter(question=question1)
     assert sub_q_qs.count() == 8
@@ -71,6 +63,7 @@ def test_import_questions():
     assert Option.objects.get(question=question1d, order_number=1).value == "Joskus"
 
     question4 = Question.objects.get(number="4")
+    assert question4.mandatory_number_of_sub_questions_to_answer == "3"
     assert SubQuestion.objects.filter(question=question4).count() == 6
     joukkoliikenne = SubQuestion.objects.get(question=question4, order_number=2)
     assert (
