@@ -3,7 +3,7 @@ from io import StringIO
 import pytest
 from django.core.management import call_command
 
-from profiles.models import Option, Question, Result, SubQuestion
+from profiles.models import Option, Question, QuestionCondition, Result, SubQuestion
 
 
 def import_command(*args, **kwargs):
@@ -85,12 +85,26 @@ def test_import_questions():
     assert option_saa_results[0].topic_fi == "Joukkoliikenteen käyttäjä"
     assert option_saa_results[1].topic_sv == "MaaS-resenär"
     assert option_saa_results[2].topic_en == "Conscious traveler"
-
     question14 = Question.objects.get(number="14")
+    assert question14.options.count() == 2
+    assert question14.options.all()[1].value_en == "most comfortable route"
+    # Test question condition
+    assert QuestionCondition.objects.all().count() == 13
+    conditions = QuestionCondition.objects.filter(question=question14)
+    assert conditions.count() == 2
+    sq_train = SubQuestion.objects.get(question=question1, order_number=2)
+    condition = conditions.get(
+        question_condition=question1, sub_question_condition=sq_train
+    )
+    assert condition.option_conditions.count() == 5
+    assert condition.option_conditions.all()[0].value == "<1"
+    assert condition.option_conditions.all()[4].value == "6-7"
     # Test that rows are preserved and duplicates are not generated
     import_command()
     assert Result.objects.count() == 6
     assert Question.objects.count() == 20
+    assert QuestionCondition.objects.all().count() == 13
+
     assert question4.id == Question.objects.get(number="4").id
     new_joukkoliikenne = SubQuestion.objects.get(question=question4, order_number=2)
     assert joukkoliikenne.id == new_joukkoliikenne.id
@@ -102,3 +116,9 @@ def test_import_questions():
     assert option_saa_results[2].id == new_option_saa_results[2].id
     assert question14.id == Question.objects.get(number="14").id
     assert autoilija.id == Result.objects.get(topic_fi="Autoilija").id
+    question8 = Question.objects.get(number="8")
+    condition = QuestionCondition.objects.get(question=question8)
+    assert condition.question_condition == Question.objects.get(number="7")
+    assert condition.option_conditions.all()[0].value_fi == "Ei"
+    question10 = Question.objects.get(number="10")
+    assert question10.options.count() == 5
