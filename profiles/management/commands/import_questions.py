@@ -20,6 +20,7 @@ NUMBER_OF_CHOICES_COLUMN = 2
 CONDITION_COLUMN = 3
 QUESTION_DESCRIPTION_COLUMN = 4
 SUB_QUESTION_COLUMN = 5
+MANDATORY_NUMBER_OF_SUB_QUESTIONS_TO_ANSWER_COLUMN = 6
 SUB_QUESTION_DESCRIPTION_COLUMN = 7
 OPTION_COLUMN = 8
 RESULT_COLUMNS = [9, 10, 11, 12, 13, 14]
@@ -57,8 +58,8 @@ def get_language_dict(data: str) -> dict:
         if i < len(data):
             try:
                 d[lang] = data[i].strip()
-            except AttributeError:
-                breakpoint()
+            except AttributeError as e:
+                logger.error(f"AttributeError {e}")
         else:
             d[lang] = None
     return d
@@ -160,10 +161,19 @@ def save_questions(excel_data: pd.DataFrame, results: list):
             descriptions = get_language_dict(row_data[QUESTION_DESCRIPTION_COLUMN])
             number_of_choices = row_data[NUMBER_OF_CHOICES_COLUMN]
             if not number_of_choices:
-                number_of_choices = 1
+                number_of_choices = "1"
+
+            mandatory_number_of_sub_questions_to_answer = row_data[
+                MANDATORY_NUMBER_OF_SUB_QUESTIONS_TO_ANSWER_COLUMN
+            ]
+            if not mandatory_number_of_sub_questions_to_answer:
+                mandatory_number_of_sub_questions_to_answer = "*"
             filter = {
                 "number": question_number,
                 "number_of_choices": str(number_of_choices),
+                "mandatory_number_of_sub_questions_to_answer": str(
+                    mandatory_number_of_sub_questions_to_answer
+                ).replace(".0", ""),
             }
             for lang in LANGUAGES:
                 filter[f"question_{lang}"] = questions[lang]
