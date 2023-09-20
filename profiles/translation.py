@@ -31,7 +31,7 @@ translator.register(Option, OptionTranslationOptions)
 
 
 class ResultTranslationOptions(TranslationOptions):
-    fields = ("value", "description")
+    fields = ("topic", "value", "description")
 
 
 translator.register(Result, ResultTranslationOptions)
