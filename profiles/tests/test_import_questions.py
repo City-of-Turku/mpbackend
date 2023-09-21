@@ -40,6 +40,7 @@ def test_import_questions():
     assert question1b1.number_of_choices == "*"
     # Test Sub questions
     question1 = Question.objects.get(number="1")
+    assert question1.num_sub_questions == 8
     assert question1.number_of_choices == "1"
     assert question1.description_en[0:2] == "If"
     sub_q_qs = SubQuestion.objects.filter(question=question1)
@@ -59,6 +60,7 @@ def test_import_questions():
     assert Option.objects.filter(sub_question=sq_walk).count() == 6
     assert Option.objects.get(sub_question=sq_walk, order_number=2).value == "1"
     question1d = Question.objects.get(number="1d")
+    assert question1d.num_sub_questions == 0
     assert Option.objects.filter(question=question1d).count() == 3
     assert Option.objects.get(question=question1d, order_number=1).value == "Joskus"
 
