@@ -48,7 +48,9 @@ def test_poll(
     # Test test_condition endpoint
     # car not used, so the condition is not met
     condition_url = reverse("profiles:answer-check-if-condition-met")
-    response = api_client.post(condition_url, {"question_number": "1b"})
+    response = api_client.post(
+        condition_url, {"question_id": Question.objects.get(number="1b").id}
+    )
     assert response.status_code == 200
     assert response.json()["condition_met"] is False
     question1 = Question.objects.get(number="1")
@@ -56,12 +58,16 @@ def test_poll(
     response = api_client.post(answer_url, {"option": option.id})
 
     # 'yes' answered to car usage and the condition is met
-    response = api_client.post(condition_url, {"question_number": "1b"})
+    response = api_client.post(
+        condition_url, {"question_id": Question.objects.get(number="1b").id}
+    )
     assert response.status_code == 200
     assert response.json()["condition_met"] is True
 
     # sub_queston train is answered with 'daily' so the condition is met
-    response = api_client.post(condition_url, {"question_number": "3"})
+    response = api_client.post(
+        condition_url, {"question_id": Question.objects.get(number="3").id}
+    )
     assert response.status_code == 200
     assert response.json()["condition_met"] is True
 
