@@ -226,7 +226,7 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             200: {
                 "description": "true false",
             },
-            400: {"description": "'question_id' argument not given"},
+            400: {"description": "'question' argument not given"},
             404: {
                 "description": "'Question' or 'QuestionCondition' not found",
             },
@@ -235,7 +235,7 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
     def check_if_condition_met(self, request):
         user = get_user(request)
-        question_id = request.data.get("question_id", None)
+        question_id = request.data.get("question", None)
         if not question_id:
             return Response(
                 "'question_id' argument not given",
