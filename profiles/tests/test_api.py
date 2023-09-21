@@ -27,7 +27,9 @@ def test_poll(
     answer_url = reverse("profiles:answer-list")
     question1 = Question.objects.get(number="1")
     option = Option.objects.get(question=question1, value="no")
-    response = api_client.post(answer_url, {"option": option.id})
+    response = api_client.post(
+        answer_url, {"option": option.id, "question": question1.id}
+    )
     assert Answer.objects.count() == 1
     user = User.objects.first()
     assert user.result.value == "negative result"
@@ -37,7 +39,14 @@ def test_poll(
         question=how_ofter_public_transport_question, description="train"
     )
     option = Option.objects.get(sub_question=train_sub_q, value="daily")
-    response = api_client.post(answer_url, {"option": option.id})
+    response = api_client.post(
+        answer_url,
+        {
+            "option": option.id,
+            "question": how_ofter_public_transport_question.id,
+            "sub_question": train_sub_q.id,
+        },
+    )
     assert Answer.objects.count() == 2
     assert Answer.objects.filter(user=user).last().option == option
     # Test get-result endpoint
@@ -55,8 +64,11 @@ def test_poll(
     assert response.json()["condition_met"] is False
     question1 = Question.objects.get(number="1")
     option = Option.objects.get(question=question1, value="yes")
-    response = api_client.post(answer_url, {"option": option.id})
-
+    response = api_client.post(
+        answer_url, {"option": option.id, "question": question1.id}
+    )
+    # previous answer should be updated
+    assert Answer.objects.count() == 2
     # 'yes' answered to car usage and the condition is met
     response = api_client.post(
         condition_url, {"question": Question.objects.get(number="1b").id}
@@ -70,6 +82,23 @@ def test_poll(
     )
     assert response.status_code == 200
     assert response.json()["condition_met"] is True
+    # Change answer to never
+    option = Option.objects.get(sub_question=train_sub_q, value="never")
+    response = api_client.post(
+        answer_url,
+        {
+            "option": option.id,
+            "question": how_ofter_public_transport_question.id,
+            "sub_question": train_sub_q.id,
+        },
+    )
+    assert Answer.objects.count() == 2
+    # sub_queston train is answered with 'never' so the condition is Not met
+    response = api_client.post(
+        condition_url, {"question": Question.objects.get(number="3").id}
+    )
+    assert response.status_code == 200
+    assert response.json()["condition_met"] is False
 
     # Test end poll (logout)
     url = reverse("profiles:question-end-poll")
