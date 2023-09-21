@@ -15,6 +15,7 @@ from account.models import Profile, User
 from profiles.api.serializers import (
     AnswerSerializer,
     CustomAnswerSerializer,
+    CustomCheckConditionSerializer,
     OptionSerializer,
     QuestionConditionSerializer,
     QuestionNumberIDSerializer,
@@ -221,7 +222,7 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
     @extend_schema(
         description="Checks if condition met. Returns 'true' if the user has answered the given conditions "
         "of the question in such a way that the given question should be asked.",
-        request=CustomAnswerSerializer,
+        request=CustomCheckConditionSerializer,
         responses={
             200: {
                 "description": "true false",
