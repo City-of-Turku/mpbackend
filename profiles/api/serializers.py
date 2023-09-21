@@ -59,6 +59,10 @@ class CustomAnswerSerializer(serializers.Serializer):
     option = serializers.IntegerField()
 
 
+class CustomCheckConditionSerializer(serializers.Serializer):
+    question = serializers.IntegerField()
+
+
 class QuestionNumberIDSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
