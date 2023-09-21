@@ -177,39 +177,63 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
         return [permission() for permission in permission_classes]
 
     @extend_schema(
-        description="Create an answer by posting the id of the option for the user that "
-        "is logged in by posting the id of option.",
+        description="Create an answer for the user that is logged in by posting the id of option.",
         request=CustomAnswerSerializer,
         responses={
             201: {
                 "description": "created",
             },
-            400: {"description": "Option argument not given"},
+            400: {"description": "'option' or 'question' argument not given"},
             404: {
-                "description": "Option not found",
+                "description": "'option', 'question' or 'sub_question'  not found",
             },
             500: {"description": "Not created, user not logged in."},
         },
     )
     def create(self, request, *args, **kwargs):
         option_id = request.data.get("option", None)
-        if option_id:
-            try:
-                option = Option.objects.get(id=option_id)
-            except Option.DoesNotExist:
-                return Response(
-                    f"Option {option_id} not found", status=status.HTTP_404_NOT_FOUND
-                )
-        else:
+        question_id = request.data.get("question", None)
+        sub_question_id = request.data.get("sub_question", None)
+        sub_question = None
+        if not option_id:
             return Response(
                 "'option' argument not given", status=status.HTTP_400_BAD_REQUEST
             )
 
+        if not question_id:
+            return Response(
+                "'question' argument not given", status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            option = Option.objects.get(id=option_id)
+        except Option.DoesNotExist:
+            return Response(
+                f"Option {option_id} not found", status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            question = Question.objects.get(id=question_id)
+        except Question.DoesNotExist:
+            return Response(
+                f"Question {question_id} not found", status=status.HTTP_404_NOT_FOUND
+            )
+        if question.num_sub_questions > 0:
+            try:
+                sub_question = SubQuestion.objects.get(id=sub_question_id)
+            except SubQuestion.DoesNotExist:
+                return Response(
+                    f"SubQuestion {sub_question_id} not found",
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
         user = get_user(request)
-        if user and option:
-            queryset = Answer.objects.filter(user=user, option=option)
+        if user:
+            filter = {"user": user, "question": question, "sub_question": sub_question}
+            queryset = Answer.objects.filter(**filter)
             if queryset.count() == 0:
-                Answer.objects.create(user=user, option=option)
+                filter["option"] = option
+                Answer.objects.create(**filter)
             else:
                 # Update existing answer
                 answer = queryset.first()
