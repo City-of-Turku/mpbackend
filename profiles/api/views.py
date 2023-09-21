@@ -219,13 +219,14 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             return Response("Not created", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @extend_schema(
-        description="Checks if condition met. Returns 'true' if user has answered .",
+        description="Checks if condition met. Returns 'true' if the user has answered the given conditions "
+        "of the question in such a way that the given question should be asked.",
         request=CustomAnswerSerializer,
         responses={
             200: {
                 "description": "true false",
             },
-            400: {"description": "'question_number' argument not given"},
+            400: {"description": "'question_id' argument not given"},
             404: {
                 "description": "'Question' or 'QuestionCondition' not found",
             },
@@ -234,25 +235,25 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
     def check_if_condition_met(self, request):
         user = get_user(request)
-        question_number = request.data.get("question_number", None)
-        if not question_number:
+        question_id = request.data.get("question_id", None)
+        if not question_id:
             return Response(
-                "'question_number' argument not given",
+                "'question_id' argument not given",
                 status=status.HTTP_400_BAD_REQUEST,
             )
         else:
             try:
-                question = Question.objects.get(number=question_number)
+                question = Question.objects.get(id=question_id)
             except Option.DoesNotExist:
                 return Response(
-                    f"Question {question_number} not found",
+                    f"Question {question_id} not found",
                     status=status.HTTP_404_NOT_FOUND,
                 )
         # Retrive the conditions for the question, note can have multiple conditions
         question_condition_qs = QuestionCondition.objects.filter(question=question)
         if question_condition_qs.count() == 0:
             return Response(
-                f"QuestionCondition not found for question number {question_number}",
+                f"QuestionCondition not found for question number {question_id}",
                 status=status.HTTP_404_NOT_FOUND,
             )
         for question_condition in question_condition_qs:
