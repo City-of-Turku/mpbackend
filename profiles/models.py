@@ -16,6 +16,10 @@ class Question(models.Model):
     def __str__(self):
         return f"question number:{self.number}, question: {self.question}"
 
+    @property
+    def num_sub_questions(self):
+        return self.sub_questions.count()
+
 
 class SubQuestion(models.Model):
     description = models.CharField(max_length=255, null=True)
@@ -70,6 +74,13 @@ class Answer(models.Model):
     option = models.ForeignKey(
         "Option", related_name="answers", on_delete=models.CASCADE
     )
+    question = models.ForeignKey(
+        "Question", related_name="answers", null=True, on_delete=models.CASCADE
+    )
+    sub_question = models.ForeignKey(
+        "SubQuestion", related_name="answers", null=True, on_delete=models.CASCADE
+    )
+
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
