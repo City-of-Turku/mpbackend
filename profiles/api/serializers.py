@@ -55,14 +55,17 @@ class QuestionSerializer(serializers.ModelSerializer):
         return representation
 
 
-class CustomAnswerSerializer(serializers.Serializer):
-    option = serializers.IntegerField()
+class QuestionRequestSerializer(serializers.Serializer):
     question = serializers.IntegerField()
+
+
+class AnswerRequestSerializer(QuestionRequestSerializer):
+    option = serializers.IntegerField()
     sub_question = serializers.IntegerField()
 
 
-class CustomCheckConditionSerializer(serializers.Serializer):
-    question = serializers.IntegerField()
+class ConditionMetRequestSerializer(AnswerRequestSerializer):
+    pass
 
 
 class QuestionNumberIDSerializer(serializers.ModelSerializer):

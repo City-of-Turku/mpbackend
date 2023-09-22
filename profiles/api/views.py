@@ -13,9 +13,9 @@ from rest_framework.response import Response
 from account.api.serializers import PublicUserSerializer
 from account.models import Profile, User
 from profiles.api.serializers import (
+    AnswerRequestSerializer,
     AnswerSerializer,
-    CustomAnswerSerializer,
-    CustomCheckConditionSerializer,
+    ConditionMetRequestSerializer,
     OptionSerializer,
     QuestionConditionSerializer,
     QuestionNumberIDSerializer,
@@ -178,7 +178,7 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
 
     @extend_schema(
         description="Create an answer for the user that is logged in by posting the id of option.",
-        request=CustomAnswerSerializer,
+        request=AnswerRequestSerializer,
         responses={
             201: {
                 "description": "created",
@@ -246,7 +246,7 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
     @extend_schema(
         description="Checks if condition met. Returns 'true' if the user has answered the given conditions "
         "of the question in such a way that the given question should be asked.",
-        request=CustomCheckConditionSerializer,
+        request=ConditionMetRequestSerializer,
         responses={
             200: {
                 "description": "true false",
