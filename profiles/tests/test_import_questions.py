@@ -37,11 +37,11 @@ def test_import_questions():
     # Test question without sub questions
     question1b1 = Question.objects.get(number="1b1")
     assert question1b1.question_fi == "Miksi et koskaan kulje autolla?"
-    assert question1b1.number_of_choices == "*"
+    assert question1b1.number_of_options_to_choose == "+"
     # Test Sub questions
     question1 = Question.objects.get(number="1")
     assert question1.num_sub_questions == 8
-    assert question1.number_of_choices == "1"
+    assert question1.number_of_options_to_choose == "1"
     assert question1.description_en[0:2] == "If"
     sub_q_qs = SubQuestion.objects.filter(question=question1)
     assert sub_q_qs.count() == 8
