@@ -16,9 +16,11 @@ from profiles.api.serializers import (
     AnswerRequestSerializer,
     AnswerSerializer,
     ConditionMetRequestSerializer,
+    HasConditionResponseSerializer,
     OptionSerializer,
     QuestionConditionSerializer,
     QuestionNumberIDSerializer,
+    QuestionRequestSerializer,
     QuestionSerializer,
     ResultSerializer,
     SubQuestionSerializer,
@@ -320,6 +322,50 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
         result = get_user_result(user)
         serializer = ResultSerializer(result)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        description="Check if question has condition. If the question does not have a condition"
+        ", it is not required to post the answer immediately after the answer is given.",
+        examples=None,
+        request=QuestionRequestSerializer,
+        responses={
+            200: HasConditionResponseSerializer,
+            404: {
+                "description": "'Question' not found",
+            },
+        },
+    )
+    @action(
+        detail=False,
+        methods=["POST"],
+        permission_classes=[IsAuthenticated],
+    )
+    def has_condition(self, request, *args, **kwargs):
+        question_id = request.data.get("question", None)
+        response_data = {"has_condition": False}
+
+        if not question_id:
+            return Response(
+                "'question_id' argument not given",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            try:
+                question = Question.objects.get(id=question_id)
+            except Option.DoesNotExist:
+                return Response(
+                    f"Question {question_id} not found",
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+        qs = QuestionCondition.objects.filter(question_condition=question)
+        if qs.count() > 0:
+            response_data["has_condition"] = True
+        serializer = HasConditionResponseSerializer(data=response_data)
+        if serializer.is_valid():
+            return Response(serializer.validated_data, status=status.HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 register_view(AnswerViewSet, "answer")
