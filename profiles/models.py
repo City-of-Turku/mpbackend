@@ -5,7 +5,7 @@ class Question(models.Model):
     number = models.CharField(max_length=3, null=True)
     question = models.CharField(max_length=255, null=True)
     description = models.CharField(max_length=255, null=True)
-    number_of_choices = models.CharField(max_length=2, default="1")
+    number_of_options_to_choose = models.CharField(max_length=2, default="1")
     mandatory_number_of_sub_questions_to_answer = models.CharField(
         max_length=2, default="*"
     )
