@@ -16,7 +16,7 @@ LANGUAGES = [language[0] for language in settings.LANGUAGES]
 LANGUAGE_SEPARATOR = "/"
 QUESTION_NUMBER_COLUMN = 0
 QUESTION_COLUMN = 1
-NUMBER_OF_CHOICES_COLUMN = 2
+NUMBER_OF_OPTIONS_TO_CHOOSE = 2
 CONDITION_COLUMN = 3
 QUESTION_DESCRIPTION_COLUMN = 4
 SUB_QUESTION_COLUMN = 5
@@ -159,9 +159,9 @@ def save_questions(excel_data: pd.DataFrame, results: list):
         if question_number[0].isdigit():
             questions = get_language_dict(row_data[QUESTION_COLUMN])
             descriptions = get_language_dict(row_data[QUESTION_DESCRIPTION_COLUMN])
-            number_of_choices = row_data[NUMBER_OF_CHOICES_COLUMN]
-            if not number_of_choices:
-                number_of_choices = "1"
+            number_of_options_to_choose = row_data[NUMBER_OF_OPTIONS_TO_CHOOSE]
+            if not number_of_options_to_choose:
+                number_of_options_to_choose = "1"
 
             mandatory_number_of_sub_questions_to_answer = row_data[
                 MANDATORY_NUMBER_OF_SUB_QUESTIONS_TO_ANSWER_COLUMN
@@ -170,7 +170,7 @@ def save_questions(excel_data: pd.DataFrame, results: list):
                 mandatory_number_of_sub_questions_to_answer = "*"
             filter = {
                 "number": question_number,
-                "number_of_choices": str(number_of_choices),
+                "number_of_options_to_choose": str(number_of_options_to_choose),
                 "mandatory_number_of_sub_questions_to_answer": str(
                     mandatory_number_of_sub_questions_to_answer
                 ).replace(".0", ""),
