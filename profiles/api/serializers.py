@@ -68,6 +68,10 @@ class ConditionMetRequestSerializer(AnswerRequestSerializer):
     pass
 
 
+class HasConditionResponseSerializer(serializers.Serializer):
+    has_condition = serializers.BooleanField()
+
+
 class QuestionNumberIDSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
