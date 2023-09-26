@@ -54,8 +54,8 @@ def options(questions, sub_questions, results):
 @pytest.mark.django_db
 @pytest.fixture
 def results():
-    Result.objects.create(value="negative result")
-    Result.objects.create(value="positive result")
+    Result.objects.create(topic="neg", value="negative result")
+    Result.objects.create(topic="pos", value="positive result")
     return Result.objects.all()
 
 
