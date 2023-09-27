@@ -70,8 +70,8 @@ class ConditionMetRequestSerializer(AnswerRequestSerializer):
     pass
 
 
-class HasConditionResponseSerializer(serializers.Serializer):
-    has_condition = serializers.BooleanField()
+class InConditionResponseSerializer(serializers.Serializer):
+    in_condition = serializers.BooleanField()
 
 
 class QuestionNumberIDSerializer(serializers.ModelSerializer):
