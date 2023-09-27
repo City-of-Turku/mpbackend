@@ -56,7 +56,7 @@ def test_poll(
     assert response.json()["value"] == "negative result"
     # Test test_condition endpoint
     # car not used, so the condition is not met
-    condition_url = reverse("profiles:answer-check-if-condition-met")
+    condition_url = reverse("profiles:question-check-if-condition-met")
     response = api_client.post(
         condition_url, {"question": Question.objects.get(number="1b").id}
     )
@@ -99,7 +99,20 @@ def test_poll(
     )
     assert response.status_code == 200
     assert response.json()["condition_met"] is False
-
+    # Test 'in_condition' endpoint
+    # 1b question is not incondition
+    in_condition_url = reverse("profiles:question-in-condition")
+    response = api_client.post(
+        in_condition_url, {"question": Question.objects.get(number="1b").id}
+    )
+    assert response.status_code == 200
+    assert response.json()["in_condition"] is False
+    # Question 1 is in condition
+    response = api_client.post(
+        in_condition_url, {"question": Question.objects.get(number="1").id}
+    )
+    assert response.status_code == 200
+    assert response.json()["in_condition"] is True
     # Test end poll (logout)
     url = reverse("profiles:question-end-poll")
     response = api_client.post(url)
