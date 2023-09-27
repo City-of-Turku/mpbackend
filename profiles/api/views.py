@@ -169,7 +169,8 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
     @extend_schema(
-        description="Ends the poll for the user by logging out the user.",
+        description="Ends the poll for the user by logging out the user. Updates also the PostalCodeResult table."
+        "Must be called after poll is finnished.",
         parameters=[],
         examples=None,
         responses={200: None},
