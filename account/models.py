@@ -19,6 +19,7 @@ class User(AbstractUser):
     email_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_generated = models.BooleanField(default=False)
+    postal_code_result_saved = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         """Makes email lowercase always"""
