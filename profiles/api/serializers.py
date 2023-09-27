@@ -3,6 +3,7 @@ from rest_framework import serializers
 from profiles.models import (
     Answer,
     Option,
+    PostalCodeResult,
     Question,
     QuestionCondition,
     Result,
@@ -87,4 +88,10 @@ class QuestionConditionSerializer(serializers.ModelSerializer):
 class AnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Answer
+        fields = "__all__"
+
+
+class PostalCodeResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostalCodeResult
         fields = "__all__"
