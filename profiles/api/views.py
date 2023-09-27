@@ -185,7 +185,8 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
 
     @extend_schema(
         description="Checks if condition met. Returns 'true' if the user has answered the given conditions "
-        "of the question in such a way that the given question should be asked.",
+        "of the question in such a way that the given question should be asked. "
+        "The information of the if the condition is met, should be fetced before Every question, except the first",
         request=ConditionMetRequestSerializer,
         responses={
             200: {
