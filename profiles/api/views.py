@@ -1,8 +1,10 @@
+import logging
 import uuid
 
 from django.conf import settings
 from django.contrib.auth import get_user, login, logout
 from django.contrib.auth.hashers import make_password
+from django.db import IntegrityError, transaction
 from django.utils.module_loading import import_string
 from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
@@ -28,12 +30,16 @@ from profiles.api.serializers import (
 from profiles.models import (
     Answer,
     Option,
+    PostalCode,
+    PostalCodeResult,
     Question,
     QuestionCondition,
     Result,
     SubQuestion,
 )
 from profiles.utils import generate_password, get_user_result
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_RENDERERS = [
     import_string(renderer_module)
@@ -47,6 +53,48 @@ def register_view(klass, name, basename=None):
     if basename is not None:
         entry["basename"] = basename
     all_views.append(entry)
+
+
+def get_or_create_row(model, filter):
+    results = model.objects.filter(**filter)
+    if results.exists():
+        return results.first(), False
+    else:
+        return model.objects.create(**filter), True
+
+
+@transaction.atomic
+def update_result_counts(user):
+    # Ensure that duplicate results are not saved
+    if user.postal_code_result_saved:
+        return
+    if user.result:
+        result = user.result
+    else:
+        result = get_user_result(user)
+    postal_code = None
+    postal_code_type = None
+    if user.profile.postal_code:
+        postal_code, _ = PostalCode.objects.get_or_create(
+            postal_code=user.profile.postal_code
+        )
+        postal_code_type = PostalCodeResult.HOME_POSTAL_CODE
+    if user.profile.optional_postal_code:
+        postal_code, _ = PostalCode.objects.get_or_create(
+            postal_code=user.profile.optional_postal_code
+        )
+        postal_code_type = PostalCodeResult.OPTIONAL_POSTAL_CODE
+
+    try:
+        postal_code_result, _ = PostalCodeResult.objects.get_or_create(
+            postal_code=postal_code, postal_code_type=postal_code_type, result=result
+        )
+    except IntegrityError as e:
+        logger.error(f"IntegrityError while creating PostalCodeResult: {e}")
+    postal_code_result.count += 1
+    postal_code_result.save()
+    user.postal_code_result_saved = True
+    user.save()
 
 
 class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
@@ -127,6 +175,8 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     )
     @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
     def end_poll(self, request):
+        user = get_user(request)
+        update_result_counts(user)
         logout(request)
         return Response("Poll ended, user logged out.", status=status.HTTP_200_OK)
 
@@ -303,7 +353,7 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({"condition_met": False}, status=status.HTTP_200_OK)
 
     @extend_schema(
-        description="Return the result(animal) of the authenticated user",
+        description="Return the current result(animal) of the authenticated user",
         examples=None,
         responses={200: ResultSerializer},
     )
