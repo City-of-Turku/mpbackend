@@ -268,7 +268,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             try:
                 question = Question.objects.get(id=question_id)
-            except Option.DoesNotExist:
+            except Question.DoesNotExist:
                 return Response(
                     f"Question {question_id} not found",
                     status=status.HTTP_404_NOT_FOUND,
