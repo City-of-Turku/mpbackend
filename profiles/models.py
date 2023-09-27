@@ -118,3 +118,56 @@ class QuestionCondition(models.Model):
     option_conditions = models.ManyToManyField(
         "Option", related_name="option_conditions"
     )
+
+
+class PostalCode(models.Model):
+    postal_code = models.CharField(max_length=10, null=True)
+
+    def __str__(self):
+        return f"{self.postal_code}"
+
+
+class PostalCodeResult(models.Model):
+    HOME_POSTAL_CODE = "Home"
+    OPTIONAL_POSTAL_CODE = "Work"
+    POSTAL_CODE_TYPE_CHOICES = [
+        (HOME_POSTAL_CODE, HOME_POSTAL_CODE),
+        (OPTIONAL_POSTAL_CODE, OPTIONAL_POSTAL_CODE),
+    ]
+    postal_code = models.ForeignKey(
+        "PostalCode",
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="postal_code_results",
+    )
+    postal_code_type = models.CharField(
+        max_length=4,
+        null=True,
+        choices=POSTAL_CODE_TYPE_CHOICES,
+        default=OPTIONAL_POSTAL_CODE,
+    )
+    result = models.ForeignKey(
+        "Result", related_name="postal_code_results", on_delete=models.CASCADE
+    )
+    count = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(
+                    models.Q(postal_code__isnull=True)
+                    & models.Q(postal_code_type__isnull=True)
+                )
+                | models.Q(
+                    models.Q(postal_code__isnull=False)
+                    & models.Q(postal_code_type__isnull=False)
+                ),
+                name="postal_code_and_postal_code_type_must_be_jointly_null",
+            )
+        ]
+
+    def __str__(self):
+        if self.postal_code and self.postal_code_type:
+            return f"{self.postal_code_type} postal_code: {self.postal_code}, count: {self.count}"
+        else:
+            return f"count: {self.count}"
