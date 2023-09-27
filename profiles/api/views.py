@@ -21,6 +21,7 @@ from profiles.api.serializers import (
     HasConditionResponseSerializer,
     OptionSerializer,
     PostalCodeResultSerializer,
+    PostalCodeSerializer,
     QuestionConditionSerializer,
     QuestionNumberIDSerializer,
     QuestionRequestSerializer,
@@ -428,3 +429,11 @@ class PostalCodeResultViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 register_view(PostalCodeResultViewSet, "postalcoderesult")
+
+
+class PostalCodeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = PostalCode.objects.all()
+    serializer_class = PostalCodeSerializer
+
+
+register_view(PostalCodeViewSet, "postalcode")
