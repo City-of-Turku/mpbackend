@@ -182,6 +182,63 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         logout(request)
         return Response("Poll ended, user logged out.", status=status.HTTP_200_OK)
 
+    @extend_schema(
+        description="Checks if condition met. Returns 'true' if the user has answered the given conditions "
+        "of the question in such a way that the given question should be asked.",
+        request=ConditionMetRequestSerializer,
+        responses={
+            200: {
+                "description": "true false",
+            },
+            400: {"description": "'question' argument not given"},
+            404: {
+                "description": "'Question' or 'QuestionCondition' not found",
+            },
+        },
+    )
+    @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
+    def check_if_condition_met(self, request):
+        user = get_user(request)
+        question_id = request.data.get("question", None)
+        if not question_id:
+            return Response(
+                "'question_id' argument not given",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            try:
+                question = Question.objects.get(id=question_id)
+            except Option.DoesNotExist:
+                return Response(
+                    f"Question {question_id} not found",
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+        # Retrive the conditions for the question, note can have multiple conditions
+        question_condition_qs = QuestionCondition.objects.filter(question=question)
+        if question_condition_qs.count() == 0:
+            return Response(
+                f"QuestionCondition not found for question number {question_id}",
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        for question_condition in question_condition_qs:
+            if question_condition.sub_question_condition:
+                user_answers = Answer.objects.filter(
+                    user=user,
+                    option__sub_question=question_condition.sub_question_condition,
+                ).values_list("option", flat="True")
+            else:
+                user_answers = Answer.objects.filter(
+                    user=user, option__question=question_condition.question_condition
+                ).values_list("option", flat="True")
+
+            option_conditions = question_condition.option_conditions.all().values_list(
+                "id", flat=True
+            )
+            if set(user_answers).intersection(set(option_conditions)):
+                return Response({"condition_met": True}, status=status.HTTP_200_OK)
+
+        return Response({"condition_met": False}, status=status.HTTP_200_OK)
+
 
 register_view(QuestionViewSet, "question")
 
@@ -296,63 +353,6 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(status=status.HTTP_201_CREATED)
         else:
             return Response("Not created", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    @extend_schema(
-        description="Checks if condition met. Returns 'true' if the user has answered the given conditions "
-        "of the question in such a way that the given question should be asked.",
-        request=ConditionMetRequestSerializer,
-        responses={
-            200: {
-                "description": "true false",
-            },
-            400: {"description": "'question' argument not given"},
-            404: {
-                "description": "'Question' or 'QuestionCondition' not found",
-            },
-        },
-    )
-    @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
-    def check_if_condition_met(self, request):
-        user = get_user(request)
-        question_id = request.data.get("question", None)
-        if not question_id:
-            return Response(
-                "'question_id' argument not given",
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        else:
-            try:
-                question = Question.objects.get(id=question_id)
-            except Option.DoesNotExist:
-                return Response(
-                    f"Question {question_id} not found",
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-        # Retrive the conditions for the question, note can have multiple conditions
-        question_condition_qs = QuestionCondition.objects.filter(question=question)
-        if question_condition_qs.count() == 0:
-            return Response(
-                f"QuestionCondition not found for question number {question_id}",
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        for question_condition in question_condition_qs:
-            if question_condition.sub_question_condition:
-                user_answers = Answer.objects.filter(
-                    user=user,
-                    option__sub_question=question_condition.sub_question_condition,
-                ).values_list("option", flat="True")
-            else:
-                user_answers = Answer.objects.filter(
-                    user=user, option__question=question_condition.question_condition
-                ).values_list("option", flat="True")
-
-            option_conditions = question_condition.option_conditions.all().values_list(
-                "id", flat=True
-            )
-            if set(user_answers).intersection(set(option_conditions)):
-                return Response({"condition_met": True}, status=status.HTTP_200_OK)
-
-        return Response({"condition_met": False}, status=status.HTTP_200_OK)
 
     @extend_schema(
         description="Return the current result(animal) of the authenticated user",
