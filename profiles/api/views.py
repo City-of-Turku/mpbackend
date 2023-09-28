@@ -74,6 +74,8 @@ def update_result_counts(user):
         result = user.result
     else:
         result = get_user_result(user)
+    if not result:
+        return
     postal_code = None
     postal_code_type = None
     if user.profile.postal_code:
@@ -92,6 +94,7 @@ def update_result_counts(user):
             postal_code=postal_code, postal_code_type=postal_code_type, result=result
         )
     except IntegrityError as e:
+        breakpoint()
         logger.error(f"IntegrityError while creating PostalCodeResult: {e}")
     postal_code_result.count += 1
     postal_code_result.save()
