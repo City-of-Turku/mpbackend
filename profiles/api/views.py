@@ -363,13 +363,6 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
         try:
-            option = Option.objects.get(id=option_id)
-        except Option.DoesNotExist:
-            return Response(
-                f"Option {option_id} not found", status=status.HTTP_404_NOT_FOUND
-            )
-
-        try:
             question = Question.objects.get(id=question_id)
         except Question.DoesNotExist:
             return Response(
@@ -377,10 +370,29 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             )
         if question.num_sub_questions > 0:
             try:
-                sub_question = SubQuestion.objects.get(id=sub_question_id)
+                sub_question = SubQuestion.objects.get(
+                    id=sub_question_id, question=question
+                )
             except SubQuestion.DoesNotExist:
                 return Response(
-                    f"SubQuestion {sub_question_id} not found",
+                    f"SubQuestion {sub_question_id} not found or wrong related question.",
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+        if sub_question:
+            try:
+                option = Option.objects.get(id=option_id, sub_question=sub_question)
+            except Option.DoesNotExist:
+                return Response(
+                    f"Option {option_id} not found or wrong related or sub_question.",
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+        else:
+            try:
+                option = Option.objects.get(id=option_id, question=question)
+            except Option.DoesNotExist:
+                return Response(
+                    f"Option {option_id} not found or wrong related question.",
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
