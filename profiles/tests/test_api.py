@@ -49,6 +49,16 @@ def test_poll(
     )
     assert Answer.objects.count() == 2
     assert Answer.objects.filter(user=user).last().option == option
+    # Test post answer with erroneous question id, not related to option
+    response = api_client.post(
+        answer_url,
+        {
+            "option": option.id,
+            "question": question1.id,
+        },
+    )
+    assert response.status_code == 404
+    assert Answer.objects.count() == 2
     # Test get-result endpoint
     url = reverse("profiles:answer-get-result")
     response = api_client.get(url)
