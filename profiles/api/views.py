@@ -450,6 +450,54 @@ class PostalCodeResultViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PostalCodeResult.objects.all()
     serializer_class = PostalCodeResultSerializer
 
+    def list(self, request, *args, **kwargs):
+        queryset = None
+        qs1 = None
+        qs2 = None
+        postal_code_id = request.query_params.get("postal_code", None)
+        postal_code_type_id = request.query_params.get("postal_code_type", None)
+        if postal_code_id:
+            try:
+                postal_code = PostalCode.objects.get(id=postal_code_id)
+            except PostalCode.DoesNotExist:
+                return Response(
+                    f"PostalCode {postal_code_id} not found",
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+        else:
+            # Postal code is not mandatory
+            postal_code = None
+
+        if postal_code_type_id:
+            try:
+                postal_code_type = PostalCodeType.objects.get(id=postal_code_type_id)
+            except PostalCodeType.DoesNotExist:
+                return Response(
+                    f"PostalCodeType {postal_code_type_id} not found",
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+        else:
+            # Postal code type is not mandatory
+            postal_code_type = None
+
+        # Make possible to query with None value in query params
+        # as all users do not provide a postal code
+        if "postal_code" in request.query_params:
+            qs1 = PostalCodeResult.objects.filter(postal_code=postal_code)
+        if "postal_code_type" in request.query_params:
+            qs2 = PostalCodeResult.objects.filter(postal_code_type=postal_code_type)
+
+        if qs1 and qs2:
+            queryset = qs1.intersection(qs2)
+        elif qs1 or qs2:
+            queryset = qs1 if qs1 else qs2
+        else:
+            queryset = self.queryset
+
+        page = self.paginate_queryset(queryset)
+        serializer = self.serializer_class(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
 
 register_view(PostalCodeResultViewSet, "postalcoderesult")
 
