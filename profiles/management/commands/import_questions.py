@@ -156,6 +156,7 @@ def save_questions(excel_data: pd.DataFrame, results: list):
             question_number = str(row_data[QUESTION_NUMBER_COLUMN])
         except TypeError:
             continue
+
         if question_number[0].isdigit():
             questions = get_language_dict(row_data[QUESTION_COLUMN])
             descriptions = get_language_dict(row_data[QUESTION_DESCRIPTION_COLUMN])
@@ -217,16 +218,20 @@ def save_questions(excel_data: pd.DataFrame, results: list):
 
         # Create option
         if question or sub_question and row_data[OPTION_COLUMN]:
+            val_str = row_data[OPTION_COLUMN]
             if sub_question:
                 option, _ = Option.objects.get_or_create(
                     sub_question=sub_question, order_number=option_order_number
                 )
             else:
+                # Skips rows with category info
+                if not val_str:
+                    continue
                 option, _ = Option.objects.get_or_create(
                     question=question, order_number=option_order_number
                 )
+
             option_order_number += 1
-            val_str = row_data[OPTION_COLUMN]
             save_translated_field(option, "value", get_language_dict(val_str))
             for a_i, a_c in enumerate(RESULT_COLUMNS):
                 if row_data[a_c] == IS_ANIMAL:
