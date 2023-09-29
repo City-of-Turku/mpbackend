@@ -4,6 +4,7 @@ from profiles.models import (
     Answer,
     Option,
     PostalCode,
+    PostalCodeType,
     PostalCodeResult,
     Question,
     QuestionCondition,
@@ -101,4 +102,10 @@ class PostalCodeResultSerializer(serializers.ModelSerializer):
 class PostalCodeSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostalCode
+        fields = "__all__"
+
+
+class PostalCodeTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PostalCodeType
         fields = "__all__"
