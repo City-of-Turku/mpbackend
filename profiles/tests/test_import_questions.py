@@ -112,6 +112,8 @@ def test_import_questions():
     assert question14.id == Question.objects.get(number="14").id
     assert autoilija.id == Result.objects.get(topic_fi="Autoilija").id
     question8 = Question.objects.get(number="8")
+    # Test that rows with info of Category 2 is skipped
+    assert Option.objects.filter(question=question8).count() == 5
     condition = QuestionCondition.objects.get(question=question8)
     assert condition.question_condition == Question.objects.get(number="7")
     assert condition.option_conditions.all()[0].value_fi == "Ei"
