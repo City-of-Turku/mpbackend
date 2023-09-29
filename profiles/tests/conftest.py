@@ -33,29 +33,34 @@ def sub_questions(questions):
 @pytest.mark.django_db
 @pytest.fixture
 def options(questions, sub_questions, results):
+    positive_result = Result.objects.get(value="positive result")
+    negative_result = Result.objects.get(value="negative result")
     option_no = Option.objects.create(
         value="no", question=Question.objects.get(number="1")
     )
-    option_no.results.add(Result.objects.get(value="negative result"))
+    option_no.results.add(negative_result)
     option_yes = Option.objects.create(
         value="yes", question=Question.objects.get(number="1")
     )
-    option_yes.results.add(Result.objects.get(value="positive result"))
+    option_yes.results.add(positive_result)
 
     train_sub_q = SubQuestion.objects.get(description="train")
     car_sub_q = SubQuestion.objects.get(description="car")
     Option.objects.create(value="never", sub_question=train_sub_q)
     Option.objects.create(value="daily", sub_question=train_sub_q)
-    Option.objects.create(value="never", sub_question=car_sub_q)
-    Option.objects.create(value="daily", sub_question=car_sub_q)
+    option_never = Option.objects.create(value="never", sub_question=car_sub_q)
+    option_never.results.add(negative_result)
+    option_daily = Option.objects.create(value="daily", sub_question=car_sub_q)
+    option_daily.results.add(positive_result)
+
     return Option.objects.all()
 
 
 @pytest.mark.django_db
 @pytest.fixture
 def results():
-    Result.objects.create(topic="neg", value="negative result")
-    Result.objects.create(topic="pos", value="positive result")
+    Result.objects.create(topic="negative", value="negative result")
+    Result.objects.create(topic="positive", value="positive result")
     return Result.objects.all()
 
 
