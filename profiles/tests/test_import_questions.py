@@ -82,7 +82,9 @@ def test_import_questions():
     assert option_saa_results[2].topic_en == "Conscious traveler"
     question14 = Question.objects.get(number="14")
     assert question14.options.count() == 2
-    assert question14.options.all()[1].value_en == "most comfortable route"
+    assert (
+        question14.options.all().order_by("id")[1].value_en == "most comfortable route"
+    )
     # Test question condition
     assert QuestionCondition.objects.all().count() == 13
     conditions = QuestionCondition.objects.filter(question=question14)
