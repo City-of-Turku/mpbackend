@@ -127,24 +127,38 @@ class PostalCode(models.Model):
         return f"{self.postal_code}"
 
 
-class PostalCodeResult(models.Model):
+class PostalCodeType(models.Model):
     HOME_POSTAL_CODE = "Home"
-    OPTIONAL_POSTAL_CODE = "Work"
+    OPTIONAL_POSTAL_CODE = "Optional"
     POSTAL_CODE_TYPE_CHOICES = [
         (HOME_POSTAL_CODE, HOME_POSTAL_CODE),
         (OPTIONAL_POSTAL_CODE, OPTIONAL_POSTAL_CODE),
     ]
+    type_name = models.CharField(
+        max_length=8,
+        null=True,
+        choices=POSTAL_CODE_TYPE_CHOICES,
+        default=OPTIONAL_POSTAL_CODE,
+    )
+
+    def __str__(self):
+        return f"{self.type_name}"
+
+
+class PostalCodeResult(models.Model):
+
     postal_code = models.ForeignKey(
         "PostalCode",
         null=True,
         on_delete=models.CASCADE,
         related_name="postal_code_results",
     )
-    postal_code_type = models.CharField(
-        max_length=4,
+
+    postal_code_type = models.ForeignKey(
+        "PostalCodeType",
         null=True,
-        choices=POSTAL_CODE_TYPE_CHOICES,
-        default=OPTIONAL_POSTAL_CODE,
+        on_delete=models.CASCADE,
+        related_name="postal_code_results",
     )
     result = models.ForeignKey(
         "Result", related_name="postal_code_results", on_delete=models.CASCADE
