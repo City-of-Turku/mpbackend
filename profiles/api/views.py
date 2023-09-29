@@ -6,7 +6,7 @@ from django.contrib.auth import get_user, login, logout
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
 from django.utils.module_loading import import_string
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -444,8 +444,29 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 register_view(AnswerViewSet, "answer")
+POSTAL_CODE_PARAM = OpenApiParameter(
+    name="postal_code",
+    location=OpenApiParameter.QUERY,
+    description="'id' of the PostalCode instance. Empty value is treated as null and results for "
+    "user answers that have not provided a postal code will be returned",
+    required=False,
+    type=int,
+)
+POSTAL_CODE_TYPE_PARAM = OpenApiParameter(
+    name="postal_code_type",
+    location=OpenApiParameter.QUERY,
+    description="'id' of the PostalCodeType instance. Empty value is treated as null",
+    required=False,
+    type=int,
+)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[POSTAL_CODE_PARAM, POSTAL_CODE_TYPE_PARAM],
+        description="Returns aggregated results per postal code and/or postal code type.",
+    )
+)
 class PostalCodeResultViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PostalCodeResult.objects.all()
     serializer_class = PostalCodeResultSerializer
