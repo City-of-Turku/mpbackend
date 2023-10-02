@@ -17,7 +17,7 @@ def questions():
     Question.objects.create(
         question="How often do you use following means of public transport?", number="2"
     )
-    Question.objects.create(question="why do you use train?", number="3")
+    Question.objects.create(question="Why do you use train?", number="3")
     return Question.objects.all()
 
 
@@ -35,13 +35,10 @@ def sub_questions(questions):
 def options(questions, sub_questions, results):
     positive_result = Result.objects.get(value="positive result")
     negative_result = Result.objects.get(value="negative result")
-    option_no = Option.objects.create(
-        value="no", question=Question.objects.get(number="1")
-    )
+    question1 = Question.objects.get(number="1")
+    option_no = Option.objects.create(value="no", question=question1)
     option_no.results.add(negative_result)
-    option_yes = Option.objects.create(
-        value="yes", question=Question.objects.get(number="1")
-    )
+    option_yes = Option.objects.create(value="yes", question=question1)
     option_yes.results.add(positive_result)
 
     train_sub_q = SubQuestion.objects.get(description="train")
@@ -52,6 +49,9 @@ def options(questions, sub_questions, results):
     option_never.results.add(negative_result)
     option_daily = Option.objects.create(value="daily", sub_question=car_sub_q)
     option_daily.results.add(positive_result)
+    question3 = Question.objects.get(number="3")
+    Option.objects.create(value="fast", question=question3)
+    Option.objects.create(value="easy", question=question3)
 
     return Option.objects.all()
 
