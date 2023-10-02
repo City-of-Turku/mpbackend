@@ -87,6 +87,8 @@ TEMPLATES = [
 
 CORS_ORIGIN_ALLOW_ALL = True
 
+CSRF_TRUSTED_ORIGINS = ["localhost:8080"]
+
 # DOC_ENDPOINTS = [
 #     "/api/v1/question/",
 # ]
