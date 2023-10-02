@@ -67,6 +67,26 @@ def get_or_create_row(model, filter):
         return model.objects.create(**filter), True
 
 
+def question_condition_met(question_condition_qs, user):
+    for question_condition in question_condition_qs:
+        if question_condition.sub_question_condition:
+            user_answers = Answer.objects.filter(
+                user=user,
+                option__sub_question=question_condition.sub_question_condition,
+            ).values_list("option", flat="True")
+        else:
+            user_answers = Answer.objects.filter(
+                user=user, option__question=question_condition.question_condition
+            ).values_list("option", flat="True")
+
+        option_conditions = question_condition.option_conditions.all().values_list(
+            "id", flat=True
+        )
+        if set(user_answers).intersection(set(option_conditions)):
+            return True
+    return False
+
+
 @transaction.atomic
 def update_result_counts(user):
     # Ensure that duplicate results are not saved
@@ -195,7 +215,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     @extend_schema(
         description="Checks if condition met. Returns 'true' if the user has answered the given conditions "
         "of the question in such a way that the given question should be asked. "
-        "The information of the if the condition is met, should be fetced before Every question, except the first",
+        "The information of the if the condition is met, should be fetched before Every question, except the first",
         request=ConditionMetRequestSerializer,
         responses={
             200: {
@@ -231,22 +251,8 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
                 f"QuestionCondition not found for question number {question_id}",
                 status=status.HTTP_404_NOT_FOUND,
             )
-        for question_condition in question_condition_qs:
-            if question_condition.sub_question_condition:
-                user_answers = Answer.objects.filter(
-                    user=user,
-                    option__sub_question=question_condition.sub_question_condition,
-                ).values_list("option", flat="True")
-            else:
-                user_answers = Answer.objects.filter(
-                    user=user, option__question=question_condition.question_condition
-                ).values_list("option", flat="True")
-
-            option_conditions = question_condition.option_conditions.all().values_list(
-                "id", flat=True
-            )
-            if set(user_answers).intersection(set(option_conditions)):
-                return Response({"condition_met": True}, status=status.HTTP_200_OK)
+        if question_condition_met(question_condition_qs, user):
+            return Response({"condition_met": True}, status=status.HTTP_200_OK)
 
         return Response({"condition_met": False}, status=status.HTTP_200_OK)
 
@@ -353,6 +359,10 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             404: {
                 "description": "'option', 'question' or 'sub_question'  not found",
             },
+            405: {
+                "description": "Question condition not met,"
+                " i.e. the user has answered so that this question cannot be answered"
+            },
             500: {"description": "Not created, user not logged in."},
         },
     )
@@ -406,6 +416,13 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
                 )
 
         user = get_user(request)
+        question_condition_qs = QuestionCondition.objects.filter(question=question)
+        if question_condition_qs.count() > 0:
+            if not question_condition_met(question_condition_qs, user):
+                return Response(
+                    "Question condition not met, i.e. the user has answered so that this question cannot be answered",
+                    status=status.HTTP_405_METHOD_NOT_ALLOWED,
+                )
         if user:
             filter = {"user": user, "question": question, "sub_question": sub_question}
             queryset = Answer.objects.filter(**filter)
