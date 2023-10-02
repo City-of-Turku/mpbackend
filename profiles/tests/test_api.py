@@ -228,9 +228,8 @@ def test_poll(
     assert response.json()["condition_met"] is True
 
     # sub_queston train is answered with 'daily' so the condition is met
-    response = api_client.post(
-        condition_url, {"question": Question.objects.get(number="3").id}
-    )
+    question3 = Question.objects.get(number="3")
+    response = api_client.post(condition_url, {"question": question3.id})
     assert response.status_code == 200
     assert response.json()["condition_met"] is True
     # Change answer to never
@@ -245,11 +244,34 @@ def test_poll(
     )
     assert Answer.objects.count() == 2
     # sub_queston train is answered with 'never' so the condition is Not met
-    response = api_client.post(
-        condition_url, {"question": Question.objects.get(number="3").id}
-    )
+    response = api_client.post(condition_url, {"question": question3.id})
     assert response.status_code == 200
     assert response.json()["condition_met"] is False
+
+    # Test that posting answer to a question where condition is not met fails
+    # As train sub_question is answered with "never", the condition
+    # for question "why do you use train?" is not met.
+    option_easy = Option.objects.get(question=question3, value="easy")
+    response = api_client.post(
+        answer_url, {"option": option_easy.id, "question": question3.id}
+    )
+    assert response.status_code == 405
+    # Change answer to "daily", therefore to condition for question3 is met
+    option = Option.objects.get(sub_question=train_sub_q, value="daily")
+    response = api_client.post(
+        answer_url,
+        {
+            "option": option.id,
+            "question": how_ofter_public_transport_question.id,
+            "sub_question": train_sub_q.id,
+        },
+    )
+    response = api_client.post(
+        answer_url, {"option": option_easy.id, "question": question3.id}
+    )
+    assert response.status_code == 201
+    assert Answer.objects.count() == 3
+
     # Test 'in_condition' endpoint
     # 1b question is not incondition
     in_condition_url = reverse("profiles:question-in-condition")
