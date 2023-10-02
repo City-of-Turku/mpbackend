@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user, login, logout
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
+from django.middleware.csrf import get_token
 from django.utils.module_loading import import_string
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 from rest_framework import status, viewsets
@@ -156,8 +157,9 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         user.profile = Profile.objects.create(user=user)
         user.save()
         login(request, user)
-        serializer = PublicUserSerializer(user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        # serializer = PublicUserSerializer(user)
+        response_data = {"csrf_token": get_token(request), "id": user.id}
+        return Response(response_data, status=status.HTTP_200_OK)
 
     @extend_schema(
         description="Return the numbers of questions",
