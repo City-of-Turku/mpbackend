@@ -3,7 +3,14 @@ from io import StringIO
 import pytest
 from django.core.management import call_command
 
-from profiles.models import Option, Question, QuestionCondition, Result, SubQuestion
+from profiles.models import (
+    Option,
+    Question,
+    QuestionCondition,
+    Result,
+    SubQuestion,
+    SubQuestionCondition,
+)
 
 
 def import_command(*args, **kwargs):
@@ -65,7 +72,7 @@ def test_import_questions():
     assert Option.objects.get(question=question1d, order_number=1).value == "Joskus"
 
     question4 = Question.objects.get(number="4")
-    assert question4.mandatory_number_of_sub_questions_to_answer == "3"
+    assert question4.mandatory_number_of_sub_questions_to_answer == "*"
     assert SubQuestion.objects.filter(question=question4).count() == 6
     joukkoliikenne = SubQuestion.objects.get(question=question4, order_number=2)
     assert (
@@ -80,6 +87,13 @@ def test_import_questions():
     assert option_saa_results[0].topic_fi == "Joukkoliikenteen käyttäjä"
     assert option_saa_results[1].topic_sv == "MaaS-resenär"
     assert option_saa_results[2].topic_en == "Conscious traveler"
+
+    # Test SubQuestion conditions
+    sub_question_condition = SubQuestionCondition.objects.get(
+        sub_question=joukkoliikenne
+    )
+    assert sub_question_condition.option == Option.objects.get(value_fi="Linja-autolla")
+
     question14 = Question.objects.get(number="14")
     assert question14.options.count() == 2
     assert (
