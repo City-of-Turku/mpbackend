@@ -1,7 +1,14 @@
 import pytest
 from rest_framework.test import APIClient
 
-from profiles.models import Option, Question, QuestionCondition, Result, SubQuestion
+from profiles.models import (
+    Option,
+    Question,
+    QuestionCondition,
+    Result,
+    SubQuestion,
+    SubQuestionCondition,
+)
 
 
 @pytest.fixture
@@ -18,6 +25,9 @@ def questions():
         question="How often do you use following means of public transport?", number="2"
     )
     Question.objects.create(question="Why do you use train?", number="3")
+
+    Question.objects.create(question="Questions about car driving", number="4")
+
     return Question.objects.all()
 
 
@@ -27,6 +37,10 @@ def sub_questions(questions):
     question = Question.objects.get(number="2")
     SubQuestion.objects.create(question=question, description="train", order_number=0)
     SubQuestion.objects.create(question=question, description="car", order_number=1)
+    question = Question.objects.get(number="4")
+    SubQuestion.objects.create(
+        question=question, description="Do you drive yourself?", order_number=0
+    )
     return SubQuestion.objects.all()
 
 
@@ -52,7 +66,10 @@ def options(questions, sub_questions, results):
     question3 = Question.objects.get(number="3")
     Option.objects.create(value="fast", question=question3)
     Option.objects.create(value="easy", question=question3)
-
+    Option.objects.create(
+        value="yes I drive",
+        sub_question=SubQuestion.objects.get(description="Do you drive yourself?"),
+    )
     return Option.objects.all()
 
 
@@ -86,3 +103,13 @@ def question_conditions(questions, sub_questions, options, results):
     )
     cond.option_conditions.add(Option.objects.get(question=car_question, value="yes"))
     return QuestionCondition.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def sub_question_conditions(sub_questions, options):
+    sub_question = SubQuestion.objects.get(description="Do you drive yourself?")
+    question_condition = Question.objects.get(question="Do you use car?")
+    option_yes = Option.objects.get(value="yes", question=question_condition)
+    SubQuestionCondition.objects.create(sub_question=sub_question, option=option_yes)
+    return SubQuestionCondition.objects.all()
