@@ -18,7 +18,6 @@ from account.models import Profile, User
 from profiles.api.serializers import (
     AnswerRequestSerializer,
     AnswerSerializer,
-    ConditionMetRequestSerializer,
     InConditionResponseSerializer,
     OptionSerializer,
     PostalCodeResultSerializer,
@@ -29,6 +28,8 @@ from profiles.api.serializers import (
     QuestionRequestSerializer,
     QuestionSerializer,
     ResultSerializer,
+    SubQuestionConditionSerializer,
+    SubQuestionRequestSerializer,
     SubQuestionSerializer,
 )
 from profiles.models import (
@@ -41,6 +42,7 @@ from profiles.models import (
     QuestionCondition,
     Result,
     SubQuestion,
+    SubQuestionCondition,
 )
 from profiles.utils import generate_password, get_user_result
 
@@ -66,6 +68,15 @@ def get_or_create_row(model, filter):
         return results.first(), False
     else:
         return model.objects.create(**filter), True
+
+
+def sub_question_condition_met(sub_question_condition, user):
+    if (
+        Answer.objects.filter(user=user, option=sub_question_condition.option).count()
+        > 0
+    ):
+        return True
+    return False
 
 
 def question_condition_met(question_condition_qs, user):
@@ -218,10 +229,10 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         description="Checks if condition met. Returns 'true' if the user has answered the given conditions "
         "of the question in such a way that the given question should be asked. "
         "The information of the if the condition is met, should be fetched before Every question, except the first",
-        request=ConditionMetRequestSerializer,
+        request=QuestionRequestSerializer,
         responses={
             200: {
-                "description": "true false",
+                "description": "true or false",
             },
             400: {"description": "'question' argument not given"},
             404: {
@@ -230,7 +241,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         },
     )
     @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
-    def check_if_condition_met(self, request):
+    def check_if_question_condition_met(self, request):
         user = get_user(request)
         question_id = request.data.get("question", None)
         if not question_id:
@@ -241,7 +252,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             try:
                 question = Question.objects.get(id=question_id)
-            except Option.DoesNotExist:
+            except Question.DoesNotExist:
                 return Response(
                     f"Question {question_id} not found",
                     status=status.HTTP_404_NOT_FOUND,
@@ -257,6 +268,50 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({"condition_met": True}, status=status.HTTP_200_OK)
 
         return Response({"condition_met": False}, status=status.HTTP_200_OK)
+
+    @extend_schema(
+        description="Checks if condition met for a sub question."
+        "Returns 'true', if the condition is met or there is no condition."
+        "Returns 'false', if the user has answered previous questions in way,"
+        " that the sub question should not be questioned/displayed for the user.",
+        request=SubQuestionRequestSerializer,
+        responses={
+            200: {
+                "description": "true or false",
+            },
+            400: {"description": "'sub_question' argument not given"},
+            404: {
+                "description": "'SubQuestion' or 'SubQuestionCondition' not found",
+            },
+        },
+    )
+    @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
+    def check_if_sub_question_condition_met(self, request):
+        user = get_user(request)
+        sub_question_id = request.data.get("sub_question", None)
+        if not sub_question_id:
+            return Response(
+                "'sub_question_id' argument not given",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            try:
+                sub_question = SubQuestion.objects.get(id=sub_question_id)
+            except SubQuestion.DoesNotExist:
+                return Response(
+                    f"Question {sub_question_id} not found",
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+        sub_question_condition = SubQuestionCondition.objects.filter(
+            sub_question=sub_question
+        ).first()
+        # Condition is met if no condition is found
+        condition_met = True
+        if sub_question_condition:
+            if not sub_question_condition_met(sub_question_condition, user):
+                condition_met = False
+
+        return Response({"condition_met": condition_met}, status=status.HTTP_200_OK)
 
     @extend_schema(
         description="Check if question is in condition. If the question is not in a condition"
@@ -314,6 +369,14 @@ class QuestionConditionViewSet(viewsets.ReadOnlyModelViewSet):
 register_view(QuestionConditionViewSet, "questioncondition")
 
 
+class SubQuestionConditionViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = SubQuestionCondition.objects.all()
+    serializer_class = SubQuestionConditionSerializer
+
+
+register_view(SubQuestionConditionViewSet, "subquestioncondition")
+
+
 class OptionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Option.objects.all()
     serializer_class = OptionSerializer
@@ -362,7 +425,7 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
                 "description": "'option', 'question' or 'sub_question'  not found",
             },
             405: {
-                "description": "Question condition not met,"
+                "description": "Question or sub question condition not met,"
                 " i.e. the user has answered so that this question cannot be answered"
             },
             500: {"description": "Not created, user not logged in."},
@@ -382,7 +445,6 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(
                 "'question' argument not given", status=status.HTTP_400_BAD_REQUEST
             )
-
         try:
             question = Question.objects.get(id=question_id)
         except Question.DoesNotExist:
@@ -423,6 +485,16 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
             if not question_condition_met(question_condition_qs, user):
                 return Response(
                     "Question condition not met, i.e. the user has answered so that this question cannot be answered",
+                    status=status.HTTP_405_METHOD_NOT_ALLOWED,
+                )
+        sub_question_condition = SubQuestionCondition.objects.filter(
+            sub_question=sub_question
+        ).first()
+        if sub_question_condition:
+            if not sub_question_condition_met(sub_question_condition, user):
+                return Response(
+                    "SubQuestion condition not met, "
+                    "i.e. the user has answered so that this sub question cannot be answered",
                     status=status.HTTP_405_METHOD_NOT_ALLOWED,
                 )
         if user:
