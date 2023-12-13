@@ -4,12 +4,13 @@ from profiles.models import (
     Answer,
     Option,
     PostalCode,
-    PostalCodeType,
     PostalCodeResult,
+    PostalCodeType,
     Question,
     QuestionCondition,
     Result,
     SubQuestion,
+    SubQuestionCondition,
 )
 
 
@@ -38,6 +39,9 @@ class SubQuestionSerializer(serializers.ModelSerializer):
     def to_representation(self, obj):
         representation = super().to_representation(obj)
         representation["options"] = OptionSerializer(obj.options, many=True).data
+        representation["condition"] = SubQuestionConditionSerializer(
+            obj.sub_question_conditions, many=True
+        ).data
         return representation
 
 
@@ -62,13 +66,13 @@ class QuestionRequestSerializer(serializers.Serializer):
     question = serializers.IntegerField()
 
 
-class AnswerRequestSerializer(QuestionRequestSerializer):
-    option = serializers.IntegerField()
+class SubQuestionRequestSerializer(serializers.Serializer):
     sub_question = serializers.IntegerField()
 
 
-class ConditionMetRequestSerializer(AnswerRequestSerializer):
-    pass
+class AnswerRequestSerializer(QuestionRequestSerializer):
+    option = serializers.IntegerField()
+    sub_question = serializers.IntegerField()
 
 
 class InConditionResponseSerializer(serializers.Serializer):
@@ -84,6 +88,12 @@ class QuestionNumberIDSerializer(serializers.ModelSerializer):
 class QuestionConditionSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionCondition
+        fields = "__all__"
+
+
+class SubQuestionConditionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubQuestionCondition
         fields = "__all__"
 
 
