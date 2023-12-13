@@ -207,7 +207,7 @@ def test_poll(
     assert response.json()["value"] == "negative result"
     # Test test_condition endpoint
     # car not used, so the condition is not met
-    condition_url = reverse("profiles:question-check-if-condition-met")
+    condition_url = reverse("profiles:question-check-if-question-condition-met")
     response = api_client.post(
         condition_url, {"question": Question.objects.get(number="1b").id}
     )
@@ -294,6 +294,97 @@ def test_poll(
     # should return 403 Forbidden as end_poll has logged out the user
     response = api_client.post(url, {"option": option.id})
     assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_sub_question_condition(
+    api_client, questions, sub_question_conditions, options, sub_questions
+):
+    url = reverse("profiles:question-start-poll")
+    response = api_client.post(url)
+    assert response.status_code == 200
+    answer_url = reverse("profiles:answer-list")
+    question_condition = Question.objects.get(question="Do you use car?")
+    driving_question = Question.objects.get(question="Questions about car driving")
+    sub_question = SubQuestion.objects.get(description="Do you drive yourself?")
+
+    option_yes = Option.objects.get(value="yes", question=question_condition)
+    option_yes_i_drive = Option.objects.get(
+        value="yes I drive", sub_question=sub_question
+    )
+    option_no = Option.objects.get(value="no", question=question_condition)
+
+    response = api_client.post(
+        answer_url,
+        {
+            "option": option_yes.id,
+            "question": question_condition.id,
+        },
+    )
+    assert response.status_code == 201
+
+    condition_url = reverse("profiles:question-check-if-sub-question-condition-met")
+    response = api_client.post(
+        condition_url,
+        {
+            "sub_question": SubQuestion.objects.get(
+                description="Do you drive yourself?"
+            ).id
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["condition_met"] is True
+    # Now the condition is met ,so answering the question should return code 201
+    response = api_client.post(
+        answer_url,
+        {
+            "option": option_yes_i_drive.id,
+            "question": driving_question.id,
+            "sub_question": sub_question.id,
+        },
+    )
+    assert response.status_code == 201
+
+    response = api_client.post(
+        answer_url,
+        {
+            "option": option_no.id,
+            "question": question_condition.id,
+        },
+    )
+    assert response.status_code == 201
+    assert Answer.objects.all().count() == 2
+    response = api_client.post(
+        condition_url,
+        {
+            "sub_question": SubQuestion.objects.get(
+                description="Do you drive yourself?"
+            ).id
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["condition_met"] is False
+
+    response = api_client.post(
+        answer_url,
+        {
+            "option": option_no.id,
+            "question": question_condition.id,
+        },
+    )
+    assert response.status_code == 201
+    assert Answer.objects.all().count() == 2
+    # Now the condition is Not met, so answering the question should return code 405
+    response = api_client.post(
+        answer_url,
+        {
+            "option": option_yes_i_drive.id,
+            "question": driving_question.id,
+            "sub_question": sub_question.id,
+        },
+    )
+    assert response.status_code == 405
+    assert Answer.objects.all().count() == 2
 
 
 @pytest.mark.django_db
