@@ -98,25 +98,40 @@ class Answer(models.Model):
 class QuestionCondition(models.Model):
     question = models.ForeignKey(
         "Question",
-        related_name="conditions",
+        related_name="question_conditions",
         null=True,
         on_delete=models.CASCADE,
     )
 
     question_condition = models.ForeignKey(
         "Question",
-        related_name="question_conditions",
+        related_name="condition_question_conditions",
         null=True,
         on_delete=models.CASCADE,
     )
     sub_question_condition = models.ForeignKey(
         "SubQuestion",
-        related_name="sub_question_conditions",
+        related_name="question_conditions",
         null=True,
         on_delete=models.CASCADE,
     )
     option_conditions = models.ManyToManyField(
-        "Option", related_name="option_conditions"
+        "Option", related_name="question_conditions"
+    )
+
+
+class SubQuestionCondition(models.Model):
+    sub_question = models.ForeignKey(
+        "SubQuestion",
+        related_name="sub_question_conditions",
+        null=True,
+        on_delete=models.CASCADE,
+    )
+    option = models.ForeignKey(
+        "Option",
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="sub_question_conditions",
     )
 
 
