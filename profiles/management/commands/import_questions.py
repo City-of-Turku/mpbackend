@@ -6,7 +6,14 @@ from django import db
 from django.conf import settings
 from django.core.management import BaseCommand
 
-from profiles.models import Option, Question, QuestionCondition, Result, SubQuestion
+from profiles.models import (
+    Option,
+    Question,
+    QuestionCondition,
+    Result,
+    SubQuestion,
+    SubQuestionCondition,
+)
 
 logger = logging.getLogger(__name__)
 FILENAME = "questions.xlsx"
@@ -22,8 +29,10 @@ QUESTION_DESCRIPTION_COLUMN = 4
 SUB_QUESTION_COLUMN = 5
 MANDATORY_NUMBER_OF_SUB_QUESTIONS_TO_ANSWER_COLUMN = 6
 SUB_QUESTION_DESCRIPTION_COLUMN = 7
-OPTION_COLUMN = 8
-RESULT_COLUMNS = [9, 10, 11, 12, 13, 14]
+SUB_QUESTION_CONDITION_COLUMN = 8
+
+OPTION_COLUMN = 9
+RESULT_COLUMNS = [10, 11, 12, 13, 14, 15]
 
 
 def get_root_dir() -> str:
@@ -69,11 +78,12 @@ def get_language_dict(data: str) -> dict:
 def get_and_create_results(data: pd.DataFrame) -> list:
     results_to_delete = list(Result.objects.all().values_list("id", flat=True))
     num_created = 0
-    columns = data.columns[9:15]
+
+    columns = data.columns[RESULT_COLUMNS[0] : RESULT_COLUMNS[-1] + 1]
     results = []
     for i, column in enumerate(columns):
         col_data = data[column]
-        topic = get_language_dict(data.columns[9 + i])
+        topic = get_language_dict(data.columns[RESULT_COLUMNS[0] + i])
         value = get_language_dict(col_data[1])
         description = get_language_dict(col_data[0])
         filter = {}
@@ -96,6 +106,14 @@ def get_and_create_results(data: pd.DataFrame) -> list:
     Result.objects.filter(id__in=results_to_delete).delete()
     logger.info(f"Created {num_created} Results")
     return results
+
+
+@db.transaction.atomic
+def create_sub_question_condition(row_data: str, sub_question: SubQuestion):
+    question_number, option_order_number = row_data.split(".")
+    question = Question.objects.get(number=question_number)
+    option = Option.objects.get(question=question, order_number=option_order_number)
+    SubQuestionCondition.objects.create(sub_question=sub_question, option=option)
 
 
 @db.transaction.atomic
@@ -214,6 +232,10 @@ def save_questions(excel_data: pd.DataFrame, results: list):
                     sub_question,
                     "additional_description",
                     get_language_dict(desc_str),
+                )
+            if row_data[SUB_QUESTION_CONDITION_COLUMN]:
+                create_sub_question_condition(
+                    row_data[SUB_QUESTION_CONDITION_COLUMN], sub_question
                 )
 
         # Create option
