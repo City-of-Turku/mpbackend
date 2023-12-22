@@ -1,5 +1,15 @@
 #!/bin/bash
 set -e
+
+if [ -n "$DATABASE_HOST" ]; then
+  until nc -z -v -w30 "$DATABASE_HOST" 5432
+  do
+    _log "Waiting for postgres database connection..."
+    sleep 1
+  done
+  _log "Database is up!"
+fi
+
 if [[ "$APPLY_MIGRATIONS" = "true" ]]; then
     echo "Applying database migrations..."
     ./manage.py migrate --noinput
