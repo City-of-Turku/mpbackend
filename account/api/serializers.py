@@ -14,6 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = [
+            "id",
             "username",
             "email",
             "first_name",
@@ -35,4 +36,12 @@ class ProfileSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ["user_info"]
+        fields = [
+            "id",
+            "user_info",
+            "age",
+            "postal_code",
+            "optional_postal_code",
+            "is_filled_for_fun",
+            "result_can_be_used",
+        ]
