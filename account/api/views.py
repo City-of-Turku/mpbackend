@@ -2,14 +2,13 @@ import datetime
 
 from django.conf import settings
 from django.contrib.auth import get_user, get_user_model
-# from django.contrib.auth import authenticate, login
-# from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.mixins import UpdateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
@@ -20,7 +19,8 @@ from .serializers import ProfileSerializer
 all_views = []
 
 
-class ProfileViewSet(viewsets.ModelViewSet):
+class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
+
     queryset = Profile.objects.all().select_related("user").order_by("id")
 
     serializer_class = ProfileSerializer
@@ -41,7 +41,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         )
         if serializer.is_valid():
             serializer.save()
-            return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -134,59 +134,6 @@ class ProfileViewSet(viewsets.ModelViewSet):
         model = Profile
         fields = ["id"]
         lookup_field = "id"
-
-    # @action(
-    #     detail=False,
-    #     methods=["POST"],
-    #     permission_classes=[AllowAny],
-    # )
-    # def register(self, request, *args, **kwargs):
-    #     password1 = request.data.get("password1")
-    #     password2 = request.data.get("password2")
-    #     # TODO Uncomment when front end is ready
-    #     # try:
-    #     #     password1 = base64.b64decode(request.data.get("password1")).decode()
-    #     #     password2 = base64.b64decode(request.data.get("password2")).decode()
-    #     # except:
-    #     #     return Response("Password parameters are not base64 encoded or not present.",
-    #     #  status=status.HTTP_400_BAD_REQUEST)
-    #     if password1 != password2:
-    #         return Response(
-    #             "Passwords don't match.", status=status.HTTP_400_BAD_REQUEST
-    #         )
-
-    #     # try:
-    #     #     validate_password(password1)
-    #     # except ValidationError as err:
-    #     # return Response({"password1": err}, status=status.HTTP_400_BAD_REQUEST)
-
-    #     # TODO Add Recaptcha
-
-    #     user_serializer = UserSerializer(data=request.data)
-    #     user_serializer.is_valid(raise_exception=True)
-    #     user = user_serializer.save()
-    #     user.set_password(password1)
-    #     user.is_active = True
-    #     user.save()
-    #     return Response("User created.", status=status.HTTP_201_CREATED)
-
-    # @action(
-    #     detail=False,
-    #     methods=["POST"],
-    #     permission_classes=[AllowAny],
-    # )
-    # def login(self, request, *args, **kwargs):
-    #     password = request.data.get("password", None)
-    #     username = request.data.get("username", None)
-    #     user = authenticate(request, username=username, password=password)
-    #     if user is not None:
-    #         if user.is_active:
-    #             login(request, user)
-    #             return HttpResponse("Authentication successfull")
-    #         else:
-    #             return HttpResponse("Disabled account")
-    #     else:
-    #         return HttpResponse("User not found")
 
 
 all_views.append({"class": ProfileViewSet, "name": "profile"})
