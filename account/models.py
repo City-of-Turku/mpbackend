@@ -7,8 +7,6 @@ from django.db import models
 
 class User(AbstractUser):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
-    email = models.EmailField(unique=True, blank=True, null=True)
-
     result = models.ForeignKey(
         "profiles.Result",
         related_name="users",
@@ -16,9 +14,11 @@ class User(AbstractUser):
         blank=True,
         on_delete=models.CASCADE,
     )
+    email = models.EmailField(unique=True, blank=True, null=True)
     email_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_generated = models.BooleanField(default=False)
+    # Flag that is used to ensure the user is only Once calculated to the PostalCodeResults model.
     postal_code_result_saved = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
@@ -32,17 +32,14 @@ class User(AbstractUser):
 
 
 class Profile(models.Model):
-    GENDER_OPTIONS = [
-        ("M", "Male"),
-        ("F", "Female"),
-        ("NB", "Nonbinary"),
-    ]
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile"
     )
-    gender = models.CharField(max_length=2, choices=GENDER_OPTIONS, blank=True)
+    age = models.PositiveSmallIntegerField(null=True, blank=True)
     postal_code = models.CharField(max_length=10, null=True)
     optional_postal_code = models.CharField(max_length=10, null=True)
+    is_filled_for_fun = models.BooleanField(default=False)
+    result_can_be_used = models.BooleanField(default=True)
 
     def __str__(self):
         return self.user.username
