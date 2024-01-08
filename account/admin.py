@@ -6,7 +6,7 @@ admin.site.register(User)
 
 
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "gender", "result")
+    list_display = ("user", "result")
 
     def result(self, obj):
         if obj.user.result:
