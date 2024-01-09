@@ -40,7 +40,7 @@ class SubQuestionSerializer(serializers.ModelSerializer):
         representation = super().to_representation(obj)
         representation["options"] = OptionSerializer(obj.options, many=True).data
         representation["condition"] = SubQuestionConditionSerializer(
-            obj.sub_question_conditions, many=True
+            obj.sub_question_conditions, many=False
         ).data
         return representation
 
