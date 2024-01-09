@@ -425,3 +425,49 @@ def test_questions(api_client, questions, question_conditions, options, results)
     response = api_client.get(url)
     assert response.status_code == 200
     assert response.json()["results"][-1]["number"] == questions.last().number
+
+
+@pytest.mark.django_db
+def test_result_count_is_filled_for_fun_is_false(api_client, answers, users):
+    user = users.first()
+    api_client.force_login(user=user)
+    assert user.profile.is_filled_for_fun is False
+    url = reverse("profiles:question-end-poll")
+    response = api_client.post(url)
+    assert response.status_code == 200
+    assert PostalCodeResult.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_result_count_is_filled_for_fun_is_true(api_client, answers, users):
+    user = users.first()
+    api_client.force_login(user=user)
+    url = reverse("profiles:question-end-poll")
+    user.profile.is_filled_for_fun = True
+    user.profile.save()
+    response = api_client.post(url)
+    assert response.status_code == 200
+    assert PostalCodeResult.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_result_count_result_can_be_used_is_true(api_client, answers, users):
+    user = users.first()
+    api_client.force_login(user=user)
+    assert user.profile.result_can_be_used is True
+    url = reverse("profiles:question-end-poll")
+    response = api_client.post(url)
+    assert response.status_code == 200
+    assert PostalCodeResult.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_result_count_result_can_be_used_is_false(api_client, answers, users):
+    user = users.first()
+    api_client.force_login(user=user)
+    user.profile.result_can_be_used = False
+    user.profile.save()
+    url = reverse("profiles:question-end-poll")
+    response = api_client.post(url)
+    assert response.status_code == 200
+    assert PostalCodeResult.objects.count() == 0
