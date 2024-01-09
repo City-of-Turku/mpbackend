@@ -6,9 +6,22 @@ from rest_framework.reverse import reverse
 
 from account.models import User
 
+from .utils import check_method_status_codes, patch
+
+ALL_METHODS = ("get", "post", "put", "patch", "delete")
+
 
 @pytest.mark.django_db
-def test_email_verify(api_client):
+def test_unauthenticated_cannot_do_anything(api_client, users):
+    # TODO, add start-poll url fter recaptcha integration
+    urls = [
+        reverse("account:profiles-detail", args=[users.first().id]),
+    ]
+    check_method_status_codes(api_client, urls, ALL_METHODS, 403)
+
+
+@pytest.mark.django_db
+def test_email_verify_process(api_client):
     mail.outbox = []
     test_email = "test@test.com"
     # Test authentication required
@@ -67,7 +80,7 @@ def test_email_verify(api_client):
 
 
 @pytest.mark.django_db
-def test_profile(api_client):
+def test_profile_created(api_client):
     url = reverse("profiles:question-start-poll")
     response = api_client.post(url)
     assert response.status_code == 200
@@ -75,15 +88,59 @@ def test_profile(api_client):
     user = User.objects.first()
     assert user.is_generated is True
     assert user.profile.postal_code is None
-    # Test update profile
+
+
+@pytest.mark.django_db
+def test_profile_patch_postal_code(api_client, users, profiles):
+    user = users.first()
+    api_client.force_login(user=user)
     url = reverse("account:profiles-detail", args=[user.id])
-    response = api_client.put(url, {"postal_code": "20210"})
-    assert response.status_code == 201
-    user = User.objects.first()
+    patch(api_client, url, {"postal_code": "20210"})
+    user.refresh_from_db()
     assert user.profile.postal_code == "20210"
-    url = reverse("profiles:question-end-poll")
-    response = api_client.post(url)
+    api_client.post(reverse("profiles:question-end-poll"))
     # Test update after logout (end-poll)
+    patch(api_client, url, {"postal_code": "20210"}, status_code=403)
+
+
+@pytest.mark.django_db
+def test_profile_patch_optional_postal_code(api_client, users, profiles):
+    user = users.first()
+    api_client.force_login(user=user)
     url = reverse("account:profiles-detail", args=[user.id])
-    response = api_client.put(url, {"postal_code": "20210"})
-    assert response.status_code == 403
+    patch(api_client, url, {"optional_postal_code": "20100"})
+    user.refresh_from_db()
+    assert user.profile.optional_postal_code == "20100"
+    url = reverse("profiles:question-end-poll")
+
+
+@pytest.mark.django_db
+def test_profile_patch_age(api_client, users, profiles):
+    user = users.first()
+    api_client.force_login(user=user)
+    url = reverse("account:profiles-detail", args=[user.id])
+    patch(api_client, url, {"age": 42})
+    user.refresh_from_db()
+    assert user.profile.age == 42
+
+
+@pytest.mark.django_db
+def test_profile_patch_is_filled_for_fun(api_client, users, profiles):
+    user = users.first()
+    api_client.force_login(user=user)
+    url = reverse("account:profiles-detail", args=[user.id])
+    assert user.profile.is_filled_for_fun is False
+    patch(api_client, url, {"is_filled_for_fun": True})
+    user.refresh_from_db()
+    assert user.profile.is_filled_for_fun is True
+
+
+@pytest.mark.django_db
+def test_profile_patch_result_can_be_used(api_client, users, profiles):
+    user = users.first()
+    api_client.force_login(user=user)
+    url = reverse("account:profiles-detail", args=[user.id])
+    assert user.profile.result_can_be_used is True
+    patch(api_client, url, {"result_can_be_used": False})
+    user.refresh_from_db()
+    assert user.profile.result_can_be_used is False
