@@ -100,9 +100,16 @@ def question_condition_met(question_condition_qs, user):
 
 
 @transaction.atomic
-def update_result_counts(user):
-    # Ensure that duplicate results are not saved
-    if user.postal_code_result_saved:
+def update_postal_code_result(user):
+
+    # Ensure that duplicate results are not saved, profiles filled for fun are ignored and
+    # profiles whos result can not be used are ignored.
+
+    if (
+        user.postal_code_result_saved
+        or user.profile.is_filled_for_fun
+        or not user.profile.result_can_be_used
+    ):
         return
     if user.result:
         result = user.result
@@ -169,7 +176,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         user.save()
         login(request, user)
         # serializer = PublicUserSerializer(user)
-        response_data = {"csrf_token": get_token(request), "id": user.id}
+        response_data = {"csrftoken": get_token(request), "id": user.id}
         return Response(response_data, status=status.HTTP_200_OK)
 
     @extend_schema(
@@ -221,7 +228,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
     def end_poll(self, request):
         user = get_user(request)
-        update_result_counts(user)
+        update_postal_code_result(user)
         logout(request)
         return Response("Poll ended, user logged out.", status=status.HTTP_200_OK)
 
