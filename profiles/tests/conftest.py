@@ -1,7 +1,9 @@
 import pytest
 from rest_framework.test import APIClient
 
+from account.models import Profile, User
 from profiles.models import (
+    Answer,
     Option,
     Question,
     QuestionCondition,
@@ -113,3 +115,20 @@ def sub_question_conditions(sub_questions, options):
     option_yes = Option.objects.get(value="yes", question=question_condition)
     SubQuestionCondition.objects.create(sub_question=sub_question, option=option_yes)
     return SubQuestionCondition.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def users():
+    user = User.objects.create(username="test1")
+    Profile.objects.create(user=user)
+    return User.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def answers(users, questions, options):
+    Answer.objects.create(
+        user=users.first(), question=questions.first(), option=options.first()
+    )
+    return Answer.objects.all()
