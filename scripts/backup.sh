@@ -4,7 +4,8 @@
 BACKUP_PATH=/home/azureuser/backups/
 current_date=$(date +"%Y-%m-%d")
 echo "Backuping mobilityprofile database on curren date $current_date..."
-docker exec -i mpbackend_postgres_1 /usr/bin/pg_dump -U mobilityprofile -F t mobilityprofile | gzip -9 > ${BACKUP_PATH}mpbackend_backup_${current_date}.t>echo "Backup finished."
+docker exec -i mpbackend_postgres_1 /usr/bin/pg_dump -U mobilityprofile -F t mobilityprofile | gzip -9 > ${BACKUP_PATH}mpbackend_backup_${current_date}.tar.gz
+echo "Backup finished."
 
 : 'To restore:
 To inspect the container:
