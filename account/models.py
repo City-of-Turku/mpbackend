@@ -4,6 +4,8 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from profiles.models import Result
+
 
 class User(AbstractUser):
     id = models.UUIDField(default=uuid.uuid4, primary_key=True, editable=False)
@@ -43,3 +45,30 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.username
+
+
+class MailingList(models.Model):
+    result = models.ForeignKey(
+        Result,
+        related_name="mailing_list",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return getattr(self.result, "topic", None)
+
+    @property
+    def csv_emails(self):
+        return ",".join([e.email for e in self.emails.all()])
+
+
+class MailingListEmail(models.Model):
+    email = models.EmailField(unique=True)
+    mailing_list = models.ForeignKey(
+        MailingList, related_name="emails", on_delete=models.CASCADE
+    )
+
+    def __str__(self):
+        return self.email
