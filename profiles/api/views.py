@@ -7,7 +7,12 @@ from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
 from django.middleware.csrf import get_token
 from django.utils.module_loading import import_string
-from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+    OpenApiParameter,
+    OpenApiResponse,
+)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -175,7 +180,6 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         user.profile = Profile.objects.create(user=user)
         user.save()
         login(request, user)
-        # serializer = PublicUserSerializer(user)
         response_data = {"csrftoken": get_token(request), "id": user.id}
         return Response(response_data, status=status.HTTP_200_OK)
 
@@ -183,14 +187,14 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         description="Return the numbers of questions",
         parameters=[],
         examples=None,
-        responses={200: QuestionNumberIDSerializer},
+        responses={200: QuestionNumberIDSerializer(many=True)},
     )
     @action(
         detail=False,
         methods=["GET"],
     )
     def get_question_numbers(self, request):
-        queryset = Question.objects.all().order_by("number")
+        queryset = Question.objects.all().order_by("id")
         page = self.paginate_queryset(queryset)
         serializer = QuestionNumberIDSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
@@ -238,13 +242,11 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         "The information of the if the condition is met, should be fetched before Every question, except the first",
         request=QuestionRequestSerializer,
         responses={
-            200: {
-                "description": "true or false",
-            },
-            400: {"description": "'question' argument not given"},
-            404: {
-                "description": "'Question' or 'QuestionCondition' not found",
-            },
+            200: OpenApiResponse(description="true or false"),
+            400: OpenApiResponse(description="'question' argument not given"),
+            404: OpenApiResponse(
+                description="'Question' or 'QuestionCondition' row not found"
+            ),
         },
     )
     @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
@@ -283,13 +285,11 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         " that the sub question should not be questioned/displayed for the user.",
         request=SubQuestionRequestSerializer,
         responses={
-            200: {
-                "description": "true or false",
-            },
-            400: {"description": "'sub_question' argument not given"},
-            404: {
-                "description": "'SubQuestion' or 'SubQuestionCondition' not found",
-            },
+            200: OpenApiResponse(description="true or false"),
+            400: OpenApiResponse(description="'sub_question' argument not given"),
+            404: OpenApiResponse(
+                description="'SubQuestion' or 'SubQuestionCondition' row not found"
+            ),
         },
     )
     @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
@@ -327,9 +327,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         request=QuestionRequestSerializer,
         responses={
             200: InConditionResponseSerializer,
-            404: {
-                "description": "'Question' not found",
-            },
+            404: OpenApiResponse(description="'Question' not found"),
         },
     )
     @action(
