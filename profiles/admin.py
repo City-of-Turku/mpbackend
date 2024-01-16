@@ -3,13 +3,13 @@ from django.contrib import admin
 from profiles.models import (
     Answer,
     Option,
+    PostalCode,
+    PostalCodeResult,
+    PostalCodeType,
     Question,
     QuestionCondition,
     Result,
     SubQuestion,
-    PostalCode,
-    PostalCodeResult,
-    PostalCodeType
 )
 
 admin.site.register(Question)
