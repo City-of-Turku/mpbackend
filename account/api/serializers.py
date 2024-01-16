@@ -1,7 +1,16 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from account.models import Profile
+from account.models import MailingListEmail, Profile
+
+
+class SubscribeSerializer(serializers.Serializer):
+    email = serializers.CharField()
+    result = serializers.IntegerField()
+
+
+class UnSubscribeSerializer(serializers.Serializer):
+    email = serializers.CharField()
 
 
 class PublicUserSerializer(serializers.ModelSerializer):
@@ -45,3 +54,9 @@ class ProfileSerializer(serializers.HyperlinkedModelSerializer):
             "is_filled_for_fun",
             "result_can_be_used",
         ]
+
+
+class MailingListEmailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MailingListEmail
+        fields = "__all__"
