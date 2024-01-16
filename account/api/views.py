@@ -1,13 +1,7 @@
-import datetime
-
 from django import db
-from django.conf import settings
-from django.contrib.auth import get_user, get_user_model
-from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth import get_user
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
 from django.core.validators import validate_email
-from django.utils import timezone
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -15,7 +9,7 @@ from rest_framework.mixins import UpdateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from account.models import MailingList, MailingListEmail, Profile, User
+from account.models import MailingList, MailingListEmail, Profile
 from profiles.models import Result
 
 from .serializers import ProfileSerializer, SubscribeSerializer, UnSubscribeSerializer
@@ -26,11 +20,10 @@ all_views = []
 class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
 
     queryset = Profile.objects.all().select_related("user").order_by("id")
-
     serializer_class = ProfileSerializer
 
     def get_permissions(self):
-        if self.action in ["unsubscribe", "email_verify_confirm"]:
+        if self.action in ["unsubscribe"]:
             permission_classes = [AllowAny]
         else:
             permission_classes = [IsAuthenticated]
@@ -114,96 +107,6 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
 
         qs.delete()
         return Response(f"unsubscribed {email}", status=status.HTTP_200_OK)
-
-    @action(
-        detail=False,
-        methods=["POST"],
-        permission_classes=[IsAuthenticated],
-    )
-    def save_email(self, request):
-        """
-        Endpoint to store users email.
-
-        """
-        user = get_user(request)
-        email = request.data.get("email", None)
-        if not email:
-            return Response(
-                "No 'email' provided in body.", status=status.HTTP_400_BAD_REQUEST
-            )
-        if User.objects.filter(email=email).count() > 0:
-            return Response(
-                f"Email {email} already exists", status=status.HTTP_409_CONFLICT
-            )
-        user.email = email
-        user.save()
-        return Response("Email saved", status=status.HTTP_201_CREATED)
-
-    @action(
-        detail=False,
-        methods=["GET"],
-        permission_classes=[IsAuthenticated],
-    )
-    def email_verify_request(self, request, *args, **kwargs):
-        """
-        Endpoint to send email verfication email.
-        """
-        email = request.query_params.get("email", None)
-        if not email:
-            return Response(
-                "No email supplied in request parameters.",
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        user = get_user(request)
-        if not user:
-            return Response("User not found.", status=status.HTTP_404_NOT_FOUND)
-
-        # Send email with uid and token
-        uid = user.id
-        token = default_token_generator.make_token(user)
-        subject = "Verify your email address"
-        message = f"{uid} {token}"
-        mail_sent = send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
-        if mail_sent:
-            return Response("Email sent.", status=status.HTTP_200_OK)
-        else:
-            return Response("Email not sent.", status=status.HTTP_400_BAD_REQUEST)
-
-    @action(
-        detail=False,
-        methods=["POST"],
-        permission_classes=[AllowAny],
-    )
-    def email_verify_confirm(self, request, *args, **kwargs):
-        uid = request.data.get("uid", None)
-        token = request.data.get("token", None)
-        user_model = get_user_model()
-        try:
-            user = user_model.objects.get(pk=uid)
-        except (
-            TypeError,
-            ValueError,
-            OverflowError,
-            ValidationError,
-            user_model.DoesNotExist,
-        ):
-            return Response(
-                "Email verification unsuccessful.", status=status.HTTP_400_BAD_REQUEST
-            )
-        if default_token_generator.check_token(user, token):
-            user.email_verified = True
-            # Invalidate used token by modifying user's last_login
-            user.last_login = timezone.now() + datetime.timedelta(seconds=1)
-            user.save()
-            return Response("Email verified successfully.", status=status.HTTP_200_OK)
-        return Response(
-            "Email verification unsuccessful.", status=status.HTTP_400_BAD_REQUEST
-        )
-
-    class Meta:
-        model = Profile
-        fields = ["id"]
-        lookup_field = "id"
 
 
 all_views.append({"class": ProfileViewSet, "name": "profile"})
