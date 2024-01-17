@@ -41,7 +41,7 @@ class ProfileSerializer(serializers.HyperlinkedModelSerializer):
         model = Profile
         fields = [
             "id",
-            "age",
+            "year_of_birth",
             "postal_code",
             "optional_postal_code",
             "is_filled_for_fun",

@@ -37,7 +37,7 @@ class Profile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile"
     )
-    age = models.PositiveSmallIntegerField(null=True, blank=True)
+    year_of_birth = models.PositiveSmallIntegerField(null=True, blank=True)
     postal_code = models.CharField(max_length=10, null=True)
     optional_postal_code = models.CharField(max_length=10, null=True)
     is_filled_for_fun = models.BooleanField(default=False)

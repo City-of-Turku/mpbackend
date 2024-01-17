@@ -81,13 +81,13 @@ def test_profile_patch_optional_postal_code(api_client, users, profiles):
 
 
 @pytest.mark.django_db
-def test_profile_patch_age(api_client, users, profiles):
+def test_profile_patch_year_of_birth(api_client, users, profiles):
     user = users.first()
     api_client.force_login(user=user)
     url = reverse("account:profiles-detail", args=[user.id])
-    patch(api_client, url, {"age": 42})
+    patch(api_client, url, {"year_of_birth": 42})
     user.refresh_from_db()
-    assert user.profile.age == 42
+    assert user.profile.year_of_birth == 42
 
 
 @pytest.mark.django_db
