@@ -10,6 +10,11 @@ def api_client():
     return APIClient()
 
 
+@pytest.fixture()
+def api_client_with_custom_ip_address(ip_address):
+    return APIClient(REMOTE_ADDR=ip_address)
+
+
 @pytest.fixture
 def users():
     User.objects.create(username="test1")
@@ -38,10 +43,9 @@ def mailing_lists(results):
 
 @pytest.fixture
 def mailing_list_emails(mailing_lists):
-    MailingListEmail.objects.create(
-        email="test@test.com", mailing_list=mailing_lists.first()
-    )
-    MailingListEmail.objects.create(
-        email="abc@efg.com", mailing_list=mailing_lists.first()
-    )
+    for c in range(20):
+        MailingListEmail.objects.create(
+            email=f"test_{c}@test.com", mailing_list=mailing_lists.first()
+        )
+
     return MailingListEmail.objects.all()

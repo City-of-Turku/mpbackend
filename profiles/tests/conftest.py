@@ -18,6 +18,11 @@ def api_client():
     return APIClient()
 
 
+@pytest.fixture()
+def api_client_with_custom_ip_address(ip_address):
+    return APIClient(REMOTE_ADDR=ip_address)
+
+
 @pytest.mark.django_db
 @pytest.fixture
 def questions():
