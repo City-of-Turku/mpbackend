@@ -37,17 +37,10 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.HyperlinkedModelSerializer):
-    """Profile serializer that also shows info from User model"""
-
-    user_info = UserSerializer(
-        many=False, read_only=True, source="user", required=False
-    )
-
     class Meta:
         model = Profile
         fields = [
             "id",
-            "user_info",
             "age",
             "postal_code",
             "optional_postal_code",
