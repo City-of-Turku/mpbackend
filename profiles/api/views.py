@@ -419,21 +419,23 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
         return [permission() for permission in permission_classes]
 
     @extend_schema(
-        description="Create an answer for the user that is logged in by posting the id of option.",
+        description="Create an answer for the user that is logged in."
+        "Note, if same user, question and optionally sub question is given the answer will be"
+        " updated with the new option.",
         request=AnswerRequestSerializer,
         responses={
-            201: {
-                "description": "created",
-            },
-            400: {"description": "'option' or 'question' argument not given"},
-            404: {
-                "description": "'option', 'question' or 'sub_question'  not found",
-            },
-            405: {
-                "description": "Question or sub question condition not met,"
+            201: OpenApiResponse(description="created"),
+            400: OpenApiResponse(
+                description="'option' or 'question' argument not given"
+            ),
+            404: OpenApiResponse(
+                description="'option', 'question' or 'sub_question'  not found"
+            ),
+            405: OpenApiResponse(
+                description="Question or sub question condition not met,"
                 " i.e. the user has answered so that this question cannot be answered"
-            },
-            500: {"description": "Not created, user not logged in."},
+            ),
+            500: OpenApiResponse(description="Not created"),
         },
     )
     def create(self, request, *args, **kwargs):
