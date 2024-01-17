@@ -1,4 +1,7 @@
+import time
+
 import pytest
+from django.conf import settings
 from django.db.models import Sum
 from rest_framework.reverse import reverse
 
@@ -385,6 +388,51 @@ def test_sub_question_condition(
     )
     assert response.status_code == 405
     assert Answer.objects.all().count() == 2
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "ip_address",
+    [
+        ("192.168.1.41"),
+    ],
+)
+def test_questions_anon_throttling(api_client_with_custom_ip_address):
+    count = 0
+    url = reverse("profiles:question-list")
+    num_requests = int(
+        settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["anon"].split("/")[0]
+    )
+    while count < num_requests:
+        response = api_client_with_custom_ip_address.get(url)
+        assert response.status_code == 200
+        count += 1
+    time.sleep(2)
+    response = api_client_with_custom_ip_address.get(url)
+    assert response.status_code == 429
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "ip_address",
+    [
+        ("192.168.1.42"),
+    ],
+)
+def test_questions_user_throttling(api_client_with_custom_ip_address, users):
+    api_client_with_custom_ip_address.force_login(user=users.first())
+    count = 0
+    url = reverse("profiles:question-list")
+    num_requests = int(
+        settings.REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["user"].split("/")[0]
+    )
+    while count < num_requests:
+        response = api_client_with_custom_ip_address.get(url)
+        assert response.status_code == 200
+        count += 1
+    time.sleep(2)
+    response = api_client_with_custom_ip_address.get(url)
+    assert response.status_code == 429
 
 
 @pytest.mark.django_db
