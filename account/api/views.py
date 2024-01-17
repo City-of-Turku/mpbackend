@@ -8,6 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.mixins import UpdateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 
 from account.models import MailingList, MailingListEmail, Profile
 from profiles.models import Result
@@ -15,6 +16,15 @@ from profiles.models import Result
 from .serializers import ProfileSerializer, SubscribeSerializer, UnSubscribeSerializer
 
 all_views = []
+
+
+class UnsubscribeRateThrottle(AnonRateThrottle):
+    """
+    The AnonRateThrottle will only ever throttle unauthenticated users.
+    The IP address of the incoming request is used to generate a unique key to throttle against.
+    """
+
+    rate = "10/day"
 
 
 class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
@@ -81,7 +91,8 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
         return Response("subscribed", status=status.HTTP_201_CREATED)
 
     @extend_schema(
-        description="Unaubscribe the email from the mailing list attached to the result.",
+        description="Unaubscribe the email from the mailing list attached to the result."
+        f"Note, there is a rate-limit of {UnsubscribeRateThrottle.rate} requests.",
         request=UnSubscribeSerializer,
         responses={
             200: OpenApiResponse(description="unsubscribed"),
@@ -94,6 +105,7 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
         detail=False,
         methods=["POST"],
         permission_classes=[AllowAny],
+        throttle_classes=[UnsubscribeRateThrottle],
     )
     def unsubscribe(self, request):
         email = request.data.get("email", None)
