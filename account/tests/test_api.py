@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from rest_framework.reverse import reverse
 
@@ -15,6 +17,32 @@ def test_unauthenticated_cannot_do_anything(api_client, users):
         reverse("account:profiles-detail", args=[users.first().id]),
     ]
     check_method_status_codes(api_client, urls, ALL_METHODS, 403)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "ip_address",
+    [
+        ("192.168.1.40"),
+    ],
+)
+def test_mailing_list_unsubscribe_throttling(
+    api_client_with_custom_ip_address, mailing_list_emails
+):
+    num_requests = 10
+    url = reverse("account:profiles-unsubscribe")
+    count = 0
+    while count < num_requests:
+        response = api_client_with_custom_ip_address.post(
+            url, {"email": f"test_{count}@test.com"}
+        )
+        assert response.status_code == 200
+        count += 1
+    time.sleep(2)
+    response = api_client_with_custom_ip_address.post(
+        url, {"email": f"test_{count}@test.com"}
+    )
+    assert response.status_code == 429
 
 
 @pytest.mark.django_db
@@ -158,24 +186,26 @@ def test_mailing_list_subscribe_with_invalid_post_data(api_client, users, result
 
 @pytest.mark.django_db
 def test_mailing_list_unsubscribe(api_client, mailing_list_emails):
-    assert MailingListEmail.objects.count() == 2
-    assert MailingList.objects.first().emails.count() == 2
+    num_mailing_list_emails = mailing_list_emails.count()
+    assert MailingListEmail.objects.count() == num_mailing_list_emails
+    assert MailingList.objects.first().emails.count() == num_mailing_list_emails
     url = reverse("account:profiles-unsubscribe")
-    response = api_client.post(url, {"email": "test@test.com"})
+    response = api_client.post(url, {"email": "test_0@test.com"})
     assert response.status_code == 200
-    assert MailingListEmail.objects.count() == 1
-    assert MailingList.objects.first().emails.count() == 1
+    assert MailingListEmail.objects.count() == num_mailing_list_emails - 1
+    assert MailingList.objects.first().emails.count() == num_mailing_list_emails - 1
 
 
 @pytest.mark.django_db
 def test_mailing_list_unsubscribe_non_existing_email(api_client, mailing_list_emails):
-    assert MailingListEmail.objects.count() == 2
-    assert MailingList.objects.first().emails.count() == 2
+    num_mailing_list_emails = mailing_list_emails.count()
+    assert MailingListEmail.objects.count() == num_mailing_list_emails
+    assert MailingList.objects.first().emails.count() == num_mailing_list_emails
     url = reverse("account:profiles-unsubscribe")
     response = api_client.post(url, {"email": "idonotexist@test.com"})
     assert response.status_code == 400
-    assert MailingListEmail.objects.count() == 2
-    assert MailingList.objects.first().emails.count() == 2
+    assert MailingListEmail.objects.count() == num_mailing_list_emails
+    assert MailingList.objects.first().emails.count() == num_mailing_list_emails
 
 
 @pytest.mark.django_db
