@@ -35,12 +35,8 @@ if os.path.exists(env_file_path):
 
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
-CORS_ALLOW_HEADERS = [
-    "X-CSRFTOKEN",
-    "csrftoken",
-    "Content-Type",
-    "Cookie",
-]
+
+
 # Custom user model
 AUTH_USER_MODEL = "account.User"
 
@@ -53,6 +49,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "rest_framework.authtoken",
     "django_extensions",
     "modeltranslation",
     "profiles.apps.ProfilesConfig",
@@ -90,9 +87,15 @@ TEMPLATES = [
     },
 ]
 
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_HEADERS = [
+    "X-CSRFTOKEN",
+    "csrftoken",
+    "Content-Type",
+    "Cookie",
+]
 
-# CSRF_TRUSTED_ORIGINS = ["http://localhost:8080"]
+
+CSRF_TRUSTED_ORIGINS = ["http://localhost:8080"]
 
 # DOC_ENDPOINTS = [
 #     "/api/v1/question/",
@@ -110,7 +113,8 @@ REST_FRAMEWORK = {
         "profiles.api.renderers.CustomBrowsableAPIRenderer",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+        # "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_CLASSES": [
@@ -223,6 +227,11 @@ LOGGING = {
     "loggers": {
         "django": {"handlers": ["console"], "level": "INFO"},
         "profiles": {"handlers": ["console"], "level": "DEBUG"},
+        "django.security.DisallowedHost": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
     },
 }
 
