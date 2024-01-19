@@ -5,7 +5,6 @@ from django.conf import settings
 from django.contrib.auth import get_user, login, logout
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
-from django.middleware.csrf import get_token
 from django.utils.module_loading import import_string
 from drf_spectacular.utils import (
     extend_schema,
@@ -14,6 +13,7 @@ from drf_spectacular.utils import (
     OpenApiResponse,
 )
 from rest_framework import status, viewsets
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -180,7 +180,8 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         user.profile = Profile.objects.create(user=user)
         user.save()
         login(request, user)
-        response_data = {"csrftoken": get_token(request), "id": user.id}
+        token, _ = Token.objects.get_or_create(user=user)
+        response_data = {"token": token.key, "id": user.id}
         return Response(response_data, status=status.HTTP_200_OK)
 
     @extend_schema(
