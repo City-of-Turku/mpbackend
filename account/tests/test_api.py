@@ -16,7 +16,7 @@ def test_unauthenticated_cannot_do_anything(api_client, users):
     urls = [
         reverse("account:profiles-detail", args=[users.first().id]),
     ]
-    check_method_status_codes(api_client, urls, ALL_METHODS, 403)
+    check_method_status_codes(api_client, urls, ALL_METHODS, 401)
 
 
 @pytest.mark.django_db
@@ -57,57 +57,57 @@ def test_profile_created(api_client):
 
 
 @pytest.mark.django_db
-def test_profile_patch_postal_code(api_client, users, profiles):
+def test_profile_patch_postal_code(api_client_authenticated, users, profiles):
     user = users.first()
-    api_client.force_login(user=user)
     url = reverse("account:profiles-detail", args=[user.id])
-    patch(api_client, url, {"postal_code": "20210"})
+    patch(api_client_authenticated, url, {"postal_code": "20210"})
     user.refresh_from_db()
     assert user.profile.postal_code == "20210"
-    api_client.post(reverse("profiles:question-end-poll"))
-    # Test update after logout (end-poll)
-    patch(api_client, url, {"postal_code": "20210"}, status_code=403)
 
 
 @pytest.mark.django_db
-def test_profile_patch_optional_postal_code(api_client, users, profiles):
+def test_profile_patch_postal_code_unauthenticated(api_client, users, profiles):
     user = users.first()
-    api_client.force_login(user=user)
     url = reverse("account:profiles-detail", args=[user.id])
-    patch(api_client, url, {"optional_postal_code": "20100"})
+    # Test update after logout (end-poll)
+    patch(api_client, url, {"postal_code": "20210"}, status_code=401)
+
+
+@pytest.mark.django_db
+def test_profile_patch_optional_postal_code(api_client_authenticated, users, profiles):
+    user = users.first()
+    url = reverse("account:profiles-detail", args=[user.id])
+    patch(api_client_authenticated, url, {"optional_postal_code": "20100"})
     user.refresh_from_db()
     assert user.profile.optional_postal_code == "20100"
     url = reverse("profiles:question-end-poll")
 
 
 @pytest.mark.django_db
-def test_profile_patch_year_of_birth(api_client, users, profiles):
+def test_profile_patch_year_of_birth(api_client_authenticated, users, profiles):
     user = users.first()
-    api_client.force_login(user=user)
     url = reverse("account:profiles-detail", args=[user.id])
-    patch(api_client, url, {"year_of_birth": 42})
+    patch(api_client_authenticated, url, {"year_of_birth": 42})
     user.refresh_from_db()
     assert user.profile.year_of_birth == 42
 
 
 @pytest.mark.django_db
-def test_profile_patch_is_filled_for_fun(api_client, users, profiles):
+def test_profile_patch_is_filled_for_fun(api_client_authenticated, users, profiles):
     user = users.first()
-    api_client.force_login(user=user)
     url = reverse("account:profiles-detail", args=[user.id])
     assert user.profile.is_filled_for_fun is False
-    patch(api_client, url, {"is_filled_for_fun": True})
+    patch(api_client_authenticated, url, {"is_filled_for_fun": True})
     user.refresh_from_db()
     assert user.profile.is_filled_for_fun is True
 
 
 @pytest.mark.django_db
-def test_profile_patch_result_can_be_used(api_client, users, profiles):
+def test_profile_patch_result_can_be_used(api_client_authenticated, users, profiles):
     user = users.first()
-    api_client.force_login(user=user)
     url = reverse("account:profiles-detail", args=[user.id])
     assert user.profile.result_can_be_used is True
-    patch(api_client, url, {"result_can_be_used": False})
+    patch(api_client_authenticated, url, {"result_can_be_used": False})
     user.refresh_from_db()
     assert user.profile.result_can_be_used is False
 
@@ -118,15 +118,15 @@ def test_mailing_list_unauthenticated_subscribe(api_client, results):
     response = api_client.post(
         url, {"email": "test@test.com", "result": results.first().id}
     )
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 @pytest.mark.django_db
-def test_mailing_list_subscribe(api_client, users, results, mailing_lists):
-    user = users.first()
-    api_client.force_login(user=user)
+def test_mailing_list_subscribe(
+    api_client_authenticated, users, results, mailing_lists
+):
     url = reverse("account:profiles-subscribe")
-    response = api_client.post(
+    response = api_client_authenticated.post(
         url, {"email": "test@test.com", "result": results.first().id}
     )
     assert response.status_code == 201
@@ -138,11 +138,10 @@ def test_mailing_list_subscribe(api_client, users, results, mailing_lists):
 
 
 @pytest.mark.django_db
-def test_mailing_list_is_created_on_subscribe(api_client, users, results):
+def test_mailing_list_is_created_on_subscribe(api_client_authenticated, users, results):
     assert MailingList.objects.count() == 0
-    api_client.force_login(user=users.first())
     url = reverse("account:profiles-subscribe")
-    response = api_client.post(
+    response = api_client_authenticated.post(
         url, {"email": "test@test.com", "result": results.first().id}
     )
     assert response.status_code == 201
@@ -151,9 +150,10 @@ def test_mailing_list_is_created_on_subscribe(api_client, users, results):
 
 
 @pytest.mark.django_db
-def test_mailing_list_subscribe_with_invalid_emails(api_client, users, results):
+def test_mailing_list_subscribe_with_invalid_emails(
+    api_client_authenticated, users, results
+):
     assert MailingList.objects.count() == 0
-    api_client.force_login(user=users.first())
     url = reverse("account:profiles-subscribe")
     for email in [
         "john.doe@company&.com",
@@ -162,23 +162,26 @@ def test_mailing_list_subscribe_with_invalid_emails(api_client, users, results):
         "john.doe@example",
         "john.doe@example",
     ]:
-        response = api_client.post(url, {"email": email, "result": results.first().id})
+        response = api_client_authenticated.post(
+            url, {"email": email, "result": results.first().id}
+        )
         assert response.status_code == 400
         assert MailingList.objects.count() == 0
         assert MailingList.objects.count() == 0
 
 
 @pytest.mark.django_db
-def test_mailing_list_subscribe_with_invalid_post_data(api_client, users, results):
-    api_client.force_login(user=users.first())
+def test_mailing_list_subscribe_with_invalid_post_data(
+    api_client_authenticated, users, results
+):
     url = reverse("account:profiles-subscribe")
     # Missing email
-    response = api_client.post(url, {"result": results.first().id})
+    response = api_client_authenticated.post(url, {"result": results.first().id})
     assert response.status_code == 400
     assert MailingList.objects.count() == 0
     assert MailingList.objects.count() == 0
     # Missing result
-    response = api_client.post(url, {"email": "test@test.com"})
+    response = api_client_authenticated.post(url, {"email": "test@test.com"})
     assert response.status_code == 400
     assert MailingList.objects.count() == 0
     assert MailingList.objects.count() == 0
