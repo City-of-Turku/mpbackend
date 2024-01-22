@@ -1,5 +1,4 @@
 from django import db
-from django.contrib.auth import get_user
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from drf_spectacular.utils import extend_schema, OpenApiResponse
@@ -41,7 +40,7 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
         return [permission() for permission in permission_classes]
 
     def update(self, request, *args, **kwargs):
-        user = get_user(request)
+        user = request.user
         instance = user.profile
         serializer = self.serializer_class(
             instance=instance, data=request.data, partial=True
