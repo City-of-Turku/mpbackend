@@ -93,13 +93,11 @@ CORS_ALLOW_HEADERS = [
     "Content-Type",
     "Cookie",
 ]
+CORS_ALLOW_CREDENTIALS = True
 
+CORS_ORIGIN_WHITELIST = ["http://localhost:8080"]
 
 CSRF_TRUSTED_ORIGINS = ["http://localhost:8080"]
-
-# DOC_ENDPOINTS = [
-#     "/api/v1/question/",
-# ]
 
 
 REST_FRAMEWORK = {
