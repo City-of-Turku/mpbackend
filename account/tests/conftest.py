@@ -1,4 +1,5 @@
 import pytest
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
 from account.models import MailingList, MailingListEmail, Profile, User
@@ -8,6 +9,16 @@ from profiles.models import Result
 @pytest.fixture
 def api_client():
     return APIClient()
+
+
+@pytest.fixture
+def api_client_authenticated(user, users):
+    if not user:
+        user = users.first()
+    token = Token.objects.create(user=user)
+    api_client = APIClient()
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    return api_client
 
 
 @pytest.fixture()
