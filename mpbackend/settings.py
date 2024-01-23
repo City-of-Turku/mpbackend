@@ -25,6 +25,7 @@ env = environ.Env(
     STATIC_ROOT=(environ.Path(), root("static")),
     MEDIA_URL=(str, "/media/"),
     STATIC_URL=(str, "/static/"),
+    CORS_ORIGIN_WHITELIST=(list, []),
 )
 # WARN about env file not being preset. Here we pre-empt it.
 env_file_path = os.path.join(BASE_DIR, CONFIG_FILE_NAME)
@@ -96,7 +97,7 @@ CORS_ALLOW_HEADERS = [
 ]
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ORIGIN_WHITELIST = ["http://localhost:8080"]
+CORS_ORIGIN_WHITELIST = env("CORS_ORIGIN_WHITELIST")
 
 CSRF_TRUSTED_ORIGINS = ["http://localhost:8080"]
 
@@ -248,3 +249,4 @@ SPECTACULAR_SETTINGS = {
     # OTHER SETTINGS
     "PREPROCESSING_HOOKS": ["mpbackend.excluded_path.preprocessing_filter_spec"],
 }
+breakpoint()
