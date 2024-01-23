@@ -14,7 +14,7 @@ ALL_METHODS = ("get", "post", "put", "patch", "delete")
 def test_unauthenticated_cannot_do_anything(api_client, users):
     # TODO, add start-poll url after recaptcha integration
     urls = [
-        reverse("account:profiles-detail", args=[users.first().id]),
+        reverse("account:profiles-detail", args=[users.get(username="test1").id]),
     ]
     check_method_status_codes(api_client, urls, ALL_METHODS, 401)
 
@@ -58,7 +58,7 @@ def test_profile_created(api_client):
 
 @pytest.mark.django_db
 def test_profile_patch_postal_code(api_client_authenticated, users, profiles):
-    user = users.first()
+    user = users.get(username="test1")
     url = reverse("account:profiles-detail", args=[user.id])
     patch(api_client_authenticated, url, {"postal_code": "20210"})
     user.refresh_from_db()
@@ -67,7 +67,7 @@ def test_profile_patch_postal_code(api_client_authenticated, users, profiles):
 
 @pytest.mark.django_db
 def test_profile_patch_postal_code_unauthenticated(api_client, users, profiles):
-    user = users.first()
+    user = users.get(username="test1")
     url = reverse("account:profiles-detail", args=[user.id])
     # Test update after logout (end-poll)
     patch(api_client, url, {"postal_code": "20210"}, status_code=401)
@@ -75,7 +75,7 @@ def test_profile_patch_postal_code_unauthenticated(api_client, users, profiles):
 
 @pytest.mark.django_db
 def test_profile_patch_optional_postal_code(api_client_authenticated, users, profiles):
-    user = users.first()
+    user = users.get(username="test1")
     url = reverse("account:profiles-detail", args=[user.id])
     patch(api_client_authenticated, url, {"optional_postal_code": "20100"})
     user.refresh_from_db()
@@ -85,7 +85,7 @@ def test_profile_patch_optional_postal_code(api_client_authenticated, users, pro
 
 @pytest.mark.django_db
 def test_profile_patch_year_of_birth(api_client_authenticated, users, profiles):
-    user = users.first()
+    user = users.get(username="test1")
     url = reverse("account:profiles-detail", args=[user.id])
     patch(api_client_authenticated, url, {"year_of_birth": 42})
     user.refresh_from_db()
@@ -94,7 +94,7 @@ def test_profile_patch_year_of_birth(api_client_authenticated, users, profiles):
 
 @pytest.mark.django_db
 def test_profile_patch_is_filled_for_fun(api_client_authenticated, users, profiles):
-    user = users.first()
+    user = users.get(username="test1")
     url = reverse("account:profiles-detail", args=[user.id])
     assert user.profile.is_filled_for_fun is False
     patch(api_client_authenticated, url, {"is_filled_for_fun": True})
@@ -104,7 +104,7 @@ def test_profile_patch_is_filled_for_fun(api_client_authenticated, users, profil
 
 @pytest.mark.django_db
 def test_profile_patch_result_can_be_used(api_client_authenticated, users, profiles):
-    user = users.first()
+    user = users.get(username="test1")
     url = reverse("account:profiles-detail", args=[user.id])
     assert user.profile.result_can_be_used is True
     patch(api_client_authenticated, url, {"result_can_be_used": False})
