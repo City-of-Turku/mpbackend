@@ -2,7 +2,7 @@ import logging
 import uuid
 
 from django.conf import settings
-from django.contrib.auth import get_user, login, logout
+from django.contrib.auth import login, logout
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
 from django.utils.module_loading import import_string
@@ -232,7 +232,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     )
     @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
     def end_poll(self, request):
-        user = get_user(request)
+        user = request.user
         update_postal_code_result(user)
         logout(request)
         return Response("Poll ended, user logged out.", status=status.HTTP_200_OK)
@@ -252,7 +252,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     )
     @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
     def check_if_question_condition_met(self, request):
-        user = get_user(request)
+        user = request.user
         question_id = request.data.get("question", None)
         if not question_id:
             return Response(
@@ -295,7 +295,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     )
     @action(detail=False, methods=["POST"], permission_classes=[IsAuthenticated])
     def check_if_sub_question_condition_met(self, request):
-        user = get_user(request)
+        user = request.user
         sub_question_id = request.data.get("sub_question", None)
         if not sub_question_id:
             return Response(
@@ -487,7 +487,7 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
-        user = get_user(request)
+        user = request.user
         question_condition_qs = QuestionCondition.objects.filter(question=question)
         if question_condition_qs.count() > 0:
             if not question_condition_met(question_condition_qs, user):
@@ -531,7 +531,7 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def get_result(self, request, *args, **kwargs):
-        user = get_user(request)
+        user = request.user
         if not user.is_authenticated:
             return Response(
                 "No authentication credentials were provided in the request.",
