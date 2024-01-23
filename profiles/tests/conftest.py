@@ -1,4 +1,5 @@
 import pytest
+from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
 from account.models import Profile, User
@@ -16,6 +17,15 @@ from profiles.models import (
 @pytest.fixture
 def api_client():
     return APIClient()
+
+
+@pytest.fixture
+def api_client_authenticated(users):
+    user = users.get(username="test1")
+    token = Token.objects.create(user=user)
+    api_client = APIClient()
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    return api_client
 
 
 @pytest.fixture()
@@ -41,7 +51,7 @@ def questions():
 @pytest.mark.django_db
 @pytest.fixture()
 def sub_questions(questions):
-    question = Question.objects.get(number="2")
+    question = questions.get(number="2")
     SubQuestion.objects.create(question=question, description="train", order_number=0)
     SubQuestion.objects.create(question=question, description="car", order_number=1)
     question = Question.objects.get(number="4")
@@ -54,16 +64,16 @@ def sub_questions(questions):
 @pytest.mark.django_db
 @pytest.fixture
 def options(questions, sub_questions, results):
-    positive_result = Result.objects.get(value="positive result")
-    negative_result = Result.objects.get(value="negative result")
-    question1 = Question.objects.get(number="1")
+    positive_result = results.get(value="positive result")
+    negative_result = results.get(value="negative result")
+    question1 = questions.get(number="1")
     option_no = Option.objects.create(value="no", question=question1)
     option_no.results.add(negative_result)
     option_yes = Option.objects.create(value="yes", question=question1)
     option_yes.results.add(positive_result)
 
-    train_sub_q = SubQuestion.objects.get(description="train")
-    car_sub_q = SubQuestion.objects.get(description="car")
+    train_sub_q = sub_questions.get(description="train")
+    car_sub_q = sub_questions.get(description="car")
     Option.objects.create(value="never", sub_question=train_sub_q)
     Option.objects.create(value="daily", sub_question=train_sub_q)
     option_never = Option.objects.create(value="never", sub_question=car_sub_q)
@@ -91,11 +101,11 @@ def results():
 @pytest.mark.django_db
 @pytest.fixture
 def question_conditions(questions, sub_questions, options, results):
-    car_question = Question.objects.get(number="1")
-    how_often_car_question = Question.objects.get(number="1b")
-    how_ofter_public_transport_question = Question.objects.get(number="2")
-    why_use_train_question = Question.objects.get(number="3")
-    train_sub_q = SubQuestion.objects.get(description="train")
+    car_question = questions.get(number="1")
+    how_often_car_question = questions.get(number="1b")
+    how_ofter_public_transport_question = questions.get(number="2")
+    why_use_train_question = questions.get(number="3")
+    train_sub_q = sub_questions.get(description="train")
     # Set condition, if uses train daily.
     cond = QuestionCondition.objects.create(
         question=why_use_train_question,
@@ -114,10 +124,10 @@ def question_conditions(questions, sub_questions, options, results):
 
 @pytest.mark.django_db
 @pytest.fixture
-def sub_question_conditions(sub_questions, options):
-    sub_question = SubQuestion.objects.get(description="Do you drive yourself?")
-    question_condition = Question.objects.get(question="Do you use car?")
-    option_yes = Option.objects.get(value="yes", question=question_condition)
+def sub_question_conditions(questions, sub_questions, options):
+    sub_question = sub_questions.get(description="Do you drive yourself?")
+    question_condition = questions.get(question="Do you use car?")
+    option_yes = options.get(value="yes", question=question_condition)
     SubQuestionCondition.objects.create(sub_question=sub_question, option=option_yes)
     return SubQuestionCondition.objects.all()
 
@@ -127,13 +137,49 @@ def sub_question_conditions(sub_questions, options):
 def users():
     user = User.objects.create(username="test1")
     Profile.objects.create(user=user)
+    user = User.objects.create(username="car user")
+    Profile.objects.create(user=user)
+    user = User.objects.create(username="non car user")
+    Profile.objects.create(user=user)
+    user = User.objects.create(username="daily train user")
+    Profile.objects.create(user=user)
+    user = User.objects.create(username="never train user")
+    Profile.objects.create(user=user)
     return User.objects.all()
 
 
 @pytest.mark.django_db
 @pytest.fixture
-def answers(users, questions, options):
+def answers(users, questions, options, sub_questions):
     Answer.objects.create(
-        user=users.first(), question=questions.first(), option=options.first()
+        user=users.get(username="test1"),
+        question=questions.get(number="1"),
+        option=options.get(value="no"),
     )
+    Answer.objects.create(
+        user=users.get(username="car user"),
+        question=questions.get(number="1"),
+        option=options.get(value="yes"),
+    )
+    Answer.objects.create(
+        user=users.get(username="non car user"),
+        question=questions.get(number="1"),
+        option=options.get(value="no"),
+    )
+    # Fixtures used when testing if sub question condition is met in question
+    train_sub_q = sub_questions.get(description="train")
+    option_daily_train = options.get(value="daily", sub_question=train_sub_q)
+    option_never_train = options.get(value="never", sub_question=train_sub_q)
+    question2 = questions.get(number="2")
+    Answer.objects.create(
+        user=users.get(username="daily train user"),
+        question=question2,
+        option=option_daily_train,
+    )
+    Answer.objects.create(
+        user=users.get(username="never train user"),
+        question=question2,
+        option=option_never_train,
+    )
+
     return Answer.objects.all()
