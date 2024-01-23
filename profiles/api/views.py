@@ -14,8 +14,10 @@ from drf_spectacular.utils import (
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
+from rest_framework.mixins import CreateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 
 from account.api.serializers import PublicUserSerializer
 from account.models import Profile, User
@@ -405,7 +407,7 @@ class ResultViewSet(viewsets.ReadOnlyModelViewSet):
 register_view(ResultViewSet, "result")
 
 
-class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
+class AnswerViewSet(CreateModelMixin, GenericViewSet):
     queryset = Answer.objects.all()
     serializer_class = AnswerSerializer
     renderer_classes = DEFAULT_RENDERERS
@@ -541,6 +543,7 @@ class AnswerViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 register_view(AnswerViewSet, "answer")
+
 POSTAL_CODE_PARAM = OpenApiParameter(
     name="postal_code",
     location=OpenApiParameter.QUERY,
