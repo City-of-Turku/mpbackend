@@ -2,7 +2,6 @@ import logging
 import uuid
 
 from django.conf import settings
-from django.contrib.auth import login, logout
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
 from django.utils.module_loading import import_string
@@ -179,7 +178,6 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         user.password = password
         user.profile = Profile.objects.create(user=user)
         user.save()
-        login(request, user)
         token, _ = Token.objects.get_or_create(user=user)
         response_data = {"token": token.key, "id": user.id}
         return Response(response_data, status=status.HTTP_200_OK)
@@ -234,8 +232,8 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     def end_poll(self, request):
         user = request.user
         update_postal_code_result(user)
-        logout(request)
-        return Response("Poll ended, user logged out.", status=status.HTTP_200_OK)
+        user.auth_token.delete()
+        return Response("Poll ended.", status=status.HTTP_200_OK)
 
     @extend_schema(
         description="Checks if condition met. Returns 'true' if the user has answered the given conditions "
