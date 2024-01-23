@@ -12,9 +12,8 @@ def api_client():
 
 
 @pytest.fixture
-def api_client_authenticated(user, users):
-    if not user:
-        user = users.first()
+def api_client_authenticated(users):
+    user = users.get(username="test1")
     token = Token.objects.create(user=user)
     api_client = APIClient()
     api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
