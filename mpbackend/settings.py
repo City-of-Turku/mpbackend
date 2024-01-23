@@ -249,4 +249,3 @@ SPECTACULAR_SETTINGS = {
     # OTHER SETTINGS
     "PREPROCESSING_HOOKS": ["mpbackend.excluded_path.preprocessing_filter_spec"],
 }
-breakpoint()
