@@ -92,6 +92,7 @@ CORS_ALLOW_HEADERS = [
     "csrftoken",
     "Content-Type",
     "Cookie",
+    "Authorization",
 ]
 CORS_ALLOW_CREDENTIALS = True
 
