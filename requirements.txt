@@ -46,6 +46,8 @@ exceptiongroup==1.1.1
     # via pytest
 flake8==6.0.0
     # via -r requirements.in
+freezegun==1.4.0
+    # via -r requirements.in
 inflection==0.5.1
     # via drf-spectacular
 iniconfig==2.0.0
@@ -96,7 +98,9 @@ pytest-cov==4.0.0
 pytest-django==4.5.2
     # via -r requirements.in
 python-dateutil==2.8.2
-    # via pandas
+    # via
+    #   freezegun
+    #   pandas
 pytz==2023.3
     # via
     #   djangorestframework
