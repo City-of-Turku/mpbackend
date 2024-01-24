@@ -9,6 +9,18 @@ from profiles.models import Answer, PostalCodeResult
 
 
 @pytest.mark.django_db
+def test_get_questions_with_conditions(
+    api_client, users, answers, questions, question_conditions
+):
+    url = reverse("profiles:question-get-questions-with-conditions")
+    response = api_client.get(url)
+    json_data = response.json()
+    assert json_data["count"] == 2
+    assert json_data["results"][0]["number"] == "1b"
+    assert json_data["results"][1]["number"] == "3"
+
+
+@pytest.mark.django_db
 def test_question_condition_is_met(
     api_client, users, answers, questions, question_conditions
 ):
