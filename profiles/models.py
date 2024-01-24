@@ -161,7 +161,6 @@ class PostalCodeType(models.Model):
 
 
 class PostalCodeResult(models.Model):
-
     postal_code = models.ForeignKey(
         "PostalCode",
         null=True,

@@ -204,7 +204,6 @@ def save_questions(excel_data: pd.DataFrame, results: list):
                 logger.info(f"Created question: {questions['fi']}")
                 num_created += 1
             else:
-
                 logger.info(f"Found question: {questions['fi']}")
                 question = queryset.first()
                 id = queryset.first().id

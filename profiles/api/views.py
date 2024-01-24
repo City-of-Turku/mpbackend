@@ -107,7 +107,6 @@ def question_condition_met(question_condition_qs, user):
 
 @transaction.atomic
 def update_postal_code_result(user):
-
     # Ensure that duplicate results are not saved, profiles filled for fun are ignored and
     # profiles whos result can not be used are ignored.
 
@@ -440,6 +439,7 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
         },
     )
     def create(self, request, *args, **kwargs):
+        user = request.user
         option_id = request.data.get("option", None)
         question_id = request.data.get("question", None)
         sub_question_id = request.data.get("sub_question", None)
@@ -487,7 +487,6 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
                     status=status.HTTP_404_NOT_FOUND,
                 )
 
-        user = request.user
         question_condition_qs = QuestionCondition.objects.filter(question=question)
         if question_condition_qs.count() > 0:
             if not question_condition_met(question_condition_qs, user):

@@ -27,7 +27,6 @@ class UnsubscribeRateThrottle(AnonRateThrottle):
 
 
 class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
-
     queryset = Profile.objects.all().select_related("user").order_by("id")
     serializer_class = ProfileSerializer
 
