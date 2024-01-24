@@ -199,6 +199,22 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = QuestionNumberIDSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
+    @extend_schema(
+        description="Returns the questions that have a condition.",
+        parameters=[],
+        examples=None,
+        responses={200: QuestionSerializer(many=True)},
+    )
+    @action(
+        detail=False,
+        methods=["GET"],
+    )
+    def get_questions_with_conditions(self, request):
+        queryset = Question.objects.filter(question_conditions__isnull=False)
+        page = self.paginate_queryset(queryset)
+        serializer = QuestionSerializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
     @action(
         detail=False,
         methods=["GET"],
