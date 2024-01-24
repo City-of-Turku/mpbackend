@@ -1,6 +1,10 @@
 import time
+from datetime import timedelta
 
 import pytest
+from django.conf import settings
+from django.utils import timezone
+from freezegun import freeze_time
 from rest_framework.reverse import reverse
 
 from account.models import MailingList, MailingListEmail, User
@@ -8,6 +12,21 @@ from account.models import MailingList, MailingListEmail, User
 from .utils import check_method_status_codes, patch
 
 ALL_METHODS = ("get", "post", "put", "patch", "delete")
+
+
+@pytest.mark.django_db
+def test_token_expiration(api_client_authenticated, users, profiles):
+    user = users.get(username="test1")
+    url = reverse("account:profiles-detail", args=[user.id])
+    with freeze_time(
+        timezone.now() + timedelta(hours=settings.TOKEN_EXPIRED_AFTER_HOURS - 1)
+    ):
+        patch(api_client_authenticated, url, {"year_of_birth": 42})
+
+    with freeze_time(
+        timezone.now() + timedelta(hours=settings.TOKEN_EXPIRED_AFTER_HOURS + 1)
+    ):
+        patch(api_client_authenticated, url, {"year_of_birth": 42}, 401)
 
 
 @pytest.mark.django_db
