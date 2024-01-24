@@ -113,8 +113,7 @@ REST_FRAMEWORK = {
         "profiles.api.renderers.CustomBrowsableAPIRenderer",
     ],
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
-        # "rest_framework.authentication.SessionAuthentication",
+        "mpbackend.authentication.ExpiringTokenAuthentication",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_CLASSES": [
@@ -249,3 +248,6 @@ SPECTACULAR_SETTINGS = {
     # OTHER SETTINGS
     "PREPROCESSING_HOOKS": ["mpbackend.excluded_path.preprocessing_filter_spec"],
 }
+
+# After how many hours users authentication token is expired and deleted
+TOKEN_EXPIRED_AFTER_HOURS = 24
