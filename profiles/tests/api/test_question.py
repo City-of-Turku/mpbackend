@@ -9,6 +9,56 @@ from profiles.models import Answer, PostalCodeResult
 
 
 @pytest.mark.django_db
+def test_questions_condition_states_not_authenticated(
+    api_client, users, questions, question_conditions
+):
+    url = reverse("profiles:question-get-questions-conditions-states")
+    response = api_client.get(url)
+    assert response.status_code == 401
+
+
+@pytest.mark.django_db
+def test_questions_condition_states(
+    api_client, users, answers, questions, question_conditions
+):
+    user = users.get(username="car user")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    url = reverse("profiles:question-get-questions-conditions-states")
+    response = api_client.get(url)
+    assert response.status_code == 200
+    how_often_car_question = questions.get(number="1b")
+    why_use_train_question = questions.get(number="3")
+
+    assert response.json()[0]["id"] == how_often_car_question.id
+    assert response.json()[0]["state"] is True
+    assert response.json()[1]["id"] == why_use_train_question.id
+    assert response.json()[1]["state"] is False
+
+    user = users.get(username="non car user")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    url = reverse("profiles:question-get-questions-conditions-states")
+    response = api_client.get(url)
+    assert response.status_code == 200
+    assert response.json()[0]["id"] == how_often_car_question.id
+    assert response.json()[0]["state"] is False
+    assert response.json()[1]["id"] == why_use_train_question.id
+    assert response.json()[1]["state"] is False
+
+    user = users.get(username="car and train user")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    url = reverse("profiles:question-get-questions-conditions-states")
+    response = api_client.get(url)
+    assert response.status_code == 200
+    assert response.json()[0]["id"] == how_often_car_question.id
+    assert response.json()[0]["state"] is True
+    assert response.json()[1]["id"] == why_use_train_question.id
+    assert response.json()[1]["state"] is True
+
+
+@pytest.mark.django_db
 def test_get_questions_with_conditions(
     api_client, users, answers, questions, question_conditions
 ):

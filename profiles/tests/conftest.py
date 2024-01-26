@@ -145,6 +145,8 @@ def users():
     Profile.objects.create(user=user)
     user = User.objects.create(username="never train user")
     Profile.objects.create(user=user)
+    user = User.objects.create(username="car and train user")
+    Profile.objects.create(user=user)
     return User.objects.all()
 
 
@@ -182,4 +184,15 @@ def answers(users, questions, options, sub_questions):
         option=option_never_train,
     )
 
+    # Fixtures to test questions_condition_states
+    Answer.objects.create(
+        user=users.get(username="car and train user"),
+        question=questions.get(number="1"),
+        option=options.get(value="yes"),
+    )
+    Answer.objects.create(
+        user=users.get(username="car and train user"),
+        question=question2,
+        option=option_daily_train,
+    )
     return Answer.objects.all()
