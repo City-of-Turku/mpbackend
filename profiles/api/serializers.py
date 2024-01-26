@@ -66,6 +66,11 @@ class QuestionRequestSerializer(serializers.Serializer):
     question = serializers.IntegerField()
 
 
+class QuestionsConditionsStatesSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    state = serializers.BooleanField()
+
+
 class SubQuestionRequestSerializer(serializers.Serializer):
     sub_question = serializers.IntegerField()
 
