@@ -32,6 +32,7 @@ from profiles.api.serializers import (
     QuestionConditionSerializer,
     QuestionNumberIDSerializer,
     QuestionRequestSerializer,
+    QuestionsConditionsStatesSerializer,
     QuestionSerializer,
     ResultSerializer,
     SubQuestionConditionSerializer,
@@ -214,6 +215,37 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         page = self.paginate_queryset(queryset)
         serializer = QuestionSerializer(page, many=True)
         return self.get_paginated_response(serializer.data)
+
+    @extend_schema(
+        description="Returns current state of condition for all questions that have a condition."
+        "If true, the condition has been met and can be displayed for the user.",
+        parameters=[],
+        examples=None,
+        responses={
+            200: OpenApiResponse(
+                description="List of states, containing the question ID and the state."
+            )
+        },
+    )
+    @action(detail=False, methods=["GET"], permission_classes=[IsAuthenticated])
+    def get_questions_conditions_states(self, request):
+
+        questions_with_cond_qs = Question.objects.filter(
+            question_conditions__isnull=False
+        )
+        user = request.user
+        states = []
+        for question in questions_with_cond_qs:
+            question_condition_qs = QuestionCondition.objects.filter(question=question)
+            state = {"id": question.id}
+            state["state"] = question_condition_met(question_condition_qs, user)
+            states.append(state)
+        serializer = QuestionsConditionsStatesSerializer(data=states, many=True)
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
+            return Response(validated_data)
+        else:
+            return Response(serializer.errors, status=400)
 
     @action(
         detail=False,
