@@ -43,7 +43,7 @@ jobs:
         pip install coverage
         coverage report -m
     - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v2  
+      uses: codecov/codecov-action@v3  
     # Majority of the tests require database
     services:
       # Label used to access the service container
