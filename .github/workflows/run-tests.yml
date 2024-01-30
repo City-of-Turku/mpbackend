@@ -23,7 +23,7 @@ jobs:
         python-version: 3.10.4
     - name: Install required Ubuntu packages
       run: |
-        sudo apt-get update && apt-get install gdal-bin
+        sudo apt-get update && sudo apt-get install gdal-bin
 
     - name: Install PyPI dependencies
       run: |
