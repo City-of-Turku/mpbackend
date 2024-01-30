@@ -51,3 +51,4 @@ createdb -O mobilityprofile -T template1 -l fi_FI.UTF-8 -E utf8 mobilityprofile
 ```
 ./manage.py import_questions
 ```
+
