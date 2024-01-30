@@ -108,8 +108,8 @@ def question_condition_met(question_condition_qs, user):
 
 @transaction.atomic
 def update_postal_code_result(user):
-    # Ensure that duplicate results are not saved, profiles filled for fun are ignored and
-    # profiles whos result can not be used are ignored.
+    # Ensure that duplicate results are not saved, profiles filled for fun and profiles whos result
+    # can not be used are ignored.
 
     if (
         user.postal_code_result_saved
