@@ -1,0 +1,17 @@
+django
+djangorestframework
+django-modeltranslation
+django-environ
+django-extensions
+pytest-django
+pytest-cov
+pip-tools
+black
+isort
+flake8
+pandas
+psycopg2-binary
+openpyxl
+drf-spectacular
+django-cors-headers
+freezegun

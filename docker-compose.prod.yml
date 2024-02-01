@@ -1,0 +1,34 @@
+version: '3.4'
+
+services:
+   
+    mpbackend:
+        build:
+            args:
+                - REQUIREMENTS_FILE=./deploy/requirements.txt
+        environment:   
+            - DEBUG=false
+        
+        command: start_production_server
+       
+    nginx:
+        build: 
+            dockerfile: ./docker/nginx/Dockerfile
+            context: .
+        ports:
+            - 80:80      
+        depends_on:
+            - mpbackend
+        networks:
+            - nginx_network
+        
+        volumes:
+            - mpbackend:/mpbackend 
+            - static:/mpbackend/static
+networks:
+  nginx_network:
+    driver: bridge
+
+volumes:
+    static:
+
