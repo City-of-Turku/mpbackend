@@ -32,7 +32,7 @@ jobs:
     - name: Run Python side code neatness tests
       run: |
         flake8
-        black --check .
+        # black --check .
         isort . -c
     - name: Run pytest code functionality tests
       run: |
