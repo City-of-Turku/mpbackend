@@ -217,8 +217,8 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         return self.get_paginated_response(serializer.data)
 
     @extend_schema(
-        description="Returns current state of condition for all questions that have a condition."
-        "If true, the condition has been met and can be displayed for the user.",
+        description="Returns the current state of conditions for all questions that have a condition."
+        "If true, the condition has been met and the question can be displayed for the user.",
         parameters=[],
         examples=None,
         responses={
@@ -239,6 +239,38 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
             question_condition_qs = QuestionCondition.objects.filter(question=question)
             state = {"id": question.id}
             state["state"] = question_condition_met(question_condition_qs, user)
+            states.append(state)
+        serializer = QuestionsConditionsStatesSerializer(data=states, many=True)
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
+            return Response(validated_data)
+        else:
+            return Response(serializer.errors, status=400)
+
+    @extend_schema(
+        description="Returns the current state of conditions for all Sub questions that have a condition."
+        "If true, the condition has been met and the sub question can be displayed for the user.",
+        parameters=[],
+        examples=None,
+        responses={
+            200: OpenApiResponse(
+                description="List of states, containing the sub question ID and the state."
+            )
+        },
+    )
+    @action(detail=False, methods=["GET"], permission_classes=[IsAuthenticated])
+    def get_sub_questions_conditions_states(self, request):
+        sub_questions_with_cond_qs = SubQuestion.objects.filter(
+            sub_question_conditions__isnull=False
+        )
+        user = request.user
+        states = []
+        for sub_question in sub_questions_with_cond_qs:
+            state = {"id": sub_question.id}
+            sub_question_condition = SubQuestionCondition.objects.filter(
+                sub_question=sub_question
+            ).first()
+            state["state"] = sub_question_condition_met(sub_question_condition, user)
             states.append(state)
         serializer = QuestionsConditionsStatesSerializer(data=states, many=True)
         if serializer.is_valid():
