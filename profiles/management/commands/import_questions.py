@@ -20,7 +20,7 @@ FILENAME = "questions.xlsx"
 IS_ANIMAL = 1
 
 LANGUAGES = [language[0] for language in settings.LANGUAGES]
-LANGUAGE_SEPARATOR = "/"
+LANGUAGE_SEPARATOR = "//"
 QUESTION_NUMBER_COLUMN = 0
 QUESTION_COLUMN = 1
 NUMBER_OF_OPTIONS_TO_CHOOSE = 2
@@ -198,17 +198,22 @@ def save_questions(excel_data: pd.DataFrame, results: list):
             filter = {
                 "number": question_number,
             }
+
             update_filter = {
                 "number_of_options_to_choose": str(number_of_options_to_choose),
                 "mandatory_number_of_sub_questions_to_answer": str(
                     mandatory_number_of_sub_questions_to_answer
                 ).replace(".0", ""),
             }
+            update_filter["question"] = questions["fi"]
+            update_filter["description"] = descriptions["fi"]
+
             for lang in LANGUAGES:
                 update_filter[f"question_{lang}"] = questions[lang]
                 update_filter[f"description_{lang}"] = descriptions[lang]
 
             queryset = Question.objects.filter(**filter)
+
             if queryset.count() == 0:
                 question = Question.objects.create(**filter)
                 Question.objects.filter(**filter).update(**update_filter)
