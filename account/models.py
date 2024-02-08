@@ -34,6 +34,11 @@ class User(AbstractUser):
 
 
 class Profile(models.Model):
+    GENDER_OPTIONS = [
+        ("M", "Male"),
+        ("F", "Female"),
+        ("X", "X"),
+    ]
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile"
     )
@@ -42,6 +47,9 @@ class Profile(models.Model):
     optional_postal_code = models.CharField(max_length=10, null=True)
     is_filled_for_fun = models.BooleanField(default=False)
     result_can_be_used = models.BooleanField(default=True)
+    gender = models.CharField(
+        max_length=2, choices=GENDER_OPTIONS, null=True, blank=True
+    )
 
     def __str__(self):
         return self.user.username
