@@ -474,8 +474,8 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
         responses={
             201: OpenApiResponse(description="created"),
             400: OpenApiResponse(
-                description="'option' or 'question' not found in body or for option where 'is_other' field is true"
-                " 'other' is field missing in body"
+                description="'option' or 'question' not found in body or for if 'is_other' is true for option"
+                " 'other' field is missing in body"
             ),
             404: OpenApiResponse(
                 description="'option', 'question' or 'sub_question' not found"
@@ -558,7 +558,7 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
                 other = request.data.get("other", None)
                 if not other:
                     return Response(
-                        "'other' not found in body, required if options is_other field is true.",
+                        "'other' not found in body, required if is_other field is true for option.",
                         status=status.HTTP_400_BAD_REQUEST,
                     )
                 filter["other"] = other
