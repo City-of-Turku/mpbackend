@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from profiles.models import (
     Answer,
+    AnswerOther,
     Option,
     PostalCode,
     PostalCodeResult,
@@ -58,7 +59,46 @@ class OptionAdmin(DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.Model
         model = Option
 
 
+@admin.register(Answer)
 class AnswerAdmin(DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin):
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.filter(option__is_other=False)
+        return qs
+
+    class Meta:
+        model = Answer
+
+
+@admin.register(AnswerOther)
+class AnswerOtherAdmin(
+    DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
+):
+    list_display = (
+        "question_description",
+        "sub_question_description",
+        "other",
+    )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        qs = qs.filter(option__is_other=True)
+        return qs
+
+    def other(self, obj):
+        return obj.option.other
+
+    def question_description(self, obj):
+        if obj.question:
+            return obj.question.question_en
+        else:
+            return obj.sub_question.question.question_en
+
+    def sub_question_description(self, obj):
+        if obj.sub_question:
+            return obj.sub_question.description_en
+        return None
+
     class Meta:
         model = Answer
 
@@ -90,7 +130,6 @@ admin.site.register(SubQuestion, SubQuestionAdmin)
 admin.site.register(SubQuestionCondition, SubQuestionConditionAdmin)
 admin.site.register(Option, OptionAdmin)
 admin.site.register(Result, ResultAdmin)
-admin.site.register(Answer, AnswerAdmin)
 admin.site.register(PostalCode, PostalCodeAdmin)
 admin.site.register(PostalCodeType, PostalCodeTypeAdmin)
 admin.site.register(PostalCodeResult, PostalCodeResultAdmin)
