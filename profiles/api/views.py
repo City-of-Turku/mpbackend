@@ -217,8 +217,8 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         return self.get_paginated_response(serializer.data)
 
     @extend_schema(
-        description="Returns current state of condition for all questions that have a condition."
-        "If true, the condition has been met and can be displayed for the user.",
+        description="Returns the current state of conditions for all questions that have a condition."
+        "If true, the condition has been met and the question can be displayed for the user.",
         parameters=[],
         examples=None,
         responses={
@@ -239,6 +239,38 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
             question_condition_qs = QuestionCondition.objects.filter(question=question)
             state = {"id": question.id}
             state["state"] = question_condition_met(question_condition_qs, user)
+            states.append(state)
+        serializer = QuestionsConditionsStatesSerializer(data=states, many=True)
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
+            return Response(validated_data)
+        else:
+            return Response(serializer.errors, status=400)
+
+    @extend_schema(
+        description="Returns the current state of conditions for all Sub questions that have a condition."
+        "If true, the condition has been met and the sub question can be displayed for the user.",
+        parameters=[],
+        examples=None,
+        responses={
+            200: OpenApiResponse(
+                description="List of states, containing the sub question ID and the state."
+            )
+        },
+    )
+    @action(detail=False, methods=["GET"], permission_classes=[IsAuthenticated])
+    def get_sub_questions_conditions_states(self, request):
+        sub_questions_with_cond_qs = SubQuestion.objects.filter(
+            sub_question_conditions__isnull=False
+        )
+        user = request.user
+        states = []
+        for sub_question in sub_questions_with_cond_qs:
+            state = {"id": sub_question.id}
+            sub_question_condition = SubQuestionCondition.objects.filter(
+                sub_question=sub_question
+            ).first()
+            state["state"] = sub_question_condition_met(sub_question_condition, user)
             states.append(state)
         serializer = QuestionsConditionsStatesSerializer(data=states, many=True)
         if serializer.is_valid():
@@ -474,10 +506,11 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
         responses={
             201: OpenApiResponse(description="created"),
             400: OpenApiResponse(
-                description="'option' or 'question' argument not given"
+                description="'option' or 'question' not found in body or for if 'is_other' is true for option"
+                " 'other' field is missing in body"
             ),
             404: OpenApiResponse(
-                description="'option', 'question' or 'sub_question'  not found"
+                description="'option', 'question' or 'sub_question' not found"
             ),
             405: OpenApiResponse(
                 description="Question or sub question condition not met,"
@@ -534,7 +567,6 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
                     f"Option {option_id} not found or wrong related question.",
                     status=status.HTTP_404_NOT_FOUND,
                 )
-
         question_condition_qs = QuestionCondition.objects.filter(question=question)
         if question_condition_qs.count() > 0:
             if not question_condition_met(question_condition_qs, user):
@@ -554,6 +586,14 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
                 )
         if user:
             filter = {"user": user, "question": question, "sub_question": sub_question}
+            if option.is_other:
+                other = request.data.get("other", None)
+                if not other:
+                    return Response(
+                        "'other' not found in body, required if is_other field is true for option.",
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                filter["other"] = other
             queryset = Answer.objects.filter(**filter)
             if queryset.count() == 0:
                 filter["option"] = option

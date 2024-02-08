@@ -120,7 +120,7 @@ def create_sub_question_condition(row_data: str, sub_question: SubQuestion):
     question_number, option_order_number = row_data.split(".")
     question = Question.objects.get(number=question_number)
     option = Option.objects.get(question=question, order_number=option_order_number)
-    SubQuestionCondition.objects.create(sub_question=sub_question, option=option)
+    SubQuestionCondition.objects.get_or_create(sub_question=sub_question, option=option)
 
 
 @db.transaction.atomic
@@ -286,7 +286,6 @@ class Command(BaseCommand):
         # Question.objects.all().delete()
         # QuestionCondition.objects.all().delete()
         # Result.objects.all().delete()
-
         file_path = f"{get_root_dir()}/media/{FILENAME}"
         excel_data = pd.read_excel(file_path, sheet_name="Yhdistetty")
         excel_data = excel_data.fillna("").replace([""], [None])

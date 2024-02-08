@@ -9,6 +9,31 @@ from profiles.models import Answer, PostalCodeResult
 
 
 @pytest.mark.django_db
+@pytest.mark.django_db
+def test_sub_questions_conditions_states(
+    api_client,
+    users,
+    answers,
+    questions,
+    question_conditions,
+    sub_questions,
+    sub_question_conditions,
+):
+    url = reverse("profiles:question-get-sub-questions-conditions-states")
+    user = users.get(username="car user")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    response = api_client.get(url)
+    assert response.status_code == 200
+    assert response.json()[0]["state"] is True
+    user = users.get(username="non car user")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    response = api_client.get(url)
+    assert response.json()[0]["state"] is False
+
+
+@pytest.mark.django_db
 def test_questions_condition_states_not_authenticated(
     api_client, users, questions, question_conditions
 ):

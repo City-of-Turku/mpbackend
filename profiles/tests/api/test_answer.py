@@ -38,6 +38,31 @@ def test_post_answer(api_client_authenticated, users, questions, options):
 
 
 @pytest.mark.django_db
+def test_post_answer_with_other_option(api_client, users, answers, questions, options):
+    user = users.get(username="no answers user")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    option = options.get(value="other")
+    question3 = questions.get(number="3")
+    answer_url = reverse("profiles:answer-list")
+    response = api_client.post(
+        answer_url,
+        {"option": option.id, "question": question3.id, "other": "test data"},
+    )
+    assert response.status_code == 201
+    answers_qs = Answer.objects.filter(user=user)
+    assert answers_qs.count() == 1
+    assert answers_qs.first().other == "test data"
+    # Test posting without 'other' field to a option where is_other is True
+    response = api_client.post(
+        answer_url, {"option": option.id, "question": question3.id}
+    )
+    assert response.status_code == 400
+    answers_qs = Answer.objects.filter(user=user)
+    assert answers_qs.count() == 1
+
+
+@pytest.mark.django_db
 def test_post_answer_answer_is_updated(
     api_client_authenticated, users, answers, questions, options
 ):
