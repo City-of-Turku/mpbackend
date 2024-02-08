@@ -20,7 +20,7 @@ FILENAME = "questions.xlsx"
 IS_ANIMAL = 1
 
 LANGUAGES = [language[0] for language in settings.LANGUAGES]
-LANGUAGE_SEPARATOR = "/"
+LANGUAGE_SEPARATOR = "//"
 QUESTION_NUMBER_COLUMN = 0
 QUESTION_COLUMN = 1
 NUMBER_OF_OPTIONS_TO_CHOOSE = 2
@@ -30,9 +30,9 @@ SUB_QUESTION_COLUMN = 5
 MANDATORY_NUMBER_OF_SUB_QUESTIONS_TO_ANSWER_COLUMN = 6
 SUB_QUESTION_DESCRIPTION_COLUMN = 7
 SUB_QUESTION_CONDITION_COLUMN = 8
-
 OPTION_COLUMN = 9
 RESULT_COLUMNS = [10, 11, 12, 13, 14, 15]
+OTHER_STRING_CONTAINS = ["/Other", "Something else"]
 
 
 def get_root_dir() -> str:
@@ -43,6 +43,13 @@ def get_root_dir() -> str:
         return settings.PROJECT_ROOT
     else:
         return settings.BASE_DIR
+
+
+def is_any_substring_in_string(substrings: list, target_string: str):
+    for substring in substrings:
+        if substring in target_string:
+            return True
+    return False
 
 
 def save_translated_field(obj: Any, field_name: str, data: dict):
@@ -168,13 +175,13 @@ def save_questions(excel_data: pd.DataFrame, results: list):
     questions_to_delete = list(Question.objects.all().values_list("id", flat=True))
     for index, row_data in excel_data.iterrows():
         # The end of the questions sheet includes questions that will not be imported.
-        if index > 214:
+        if index > 201:
             break
         try:
             question_number = str(row_data[QUESTION_NUMBER_COLUMN])
         except TypeError:
             continue
-
+        # Rows containg the question starts with a digit
         if question_number[0].isdigit():
             questions = get_language_dict(row_data[QUESTION_COLUMN])
             descriptions = get_language_dict(row_data[QUESTION_DESCRIPTION_COLUMN])
@@ -187,24 +194,35 @@ def save_questions(excel_data: pd.DataFrame, results: list):
             ]
             if not mandatory_number_of_sub_questions_to_answer:
                 mandatory_number_of_sub_questions_to_answer = "*"
+
             filter = {
                 "number": question_number,
+            }
+
+            update_filter = {
                 "number_of_options_to_choose": str(number_of_options_to_choose),
                 "mandatory_number_of_sub_questions_to_answer": str(
                     mandatory_number_of_sub_questions_to_answer
                 ).replace(".0", ""),
             }
+            update_filter["question"] = questions["fi"]
+            update_filter["description"] = descriptions["fi"]
+
             for lang in LANGUAGES:
-                filter[f"question_{lang}"] = questions[lang]
-                filter[f"description_{lang}"] = descriptions[lang]
+                update_filter[f"question_{lang}"] = questions[lang]
+                update_filter[f"description_{lang}"] = descriptions[lang]
 
             queryset = Question.objects.filter(**filter)
+
             if queryset.count() == 0:
                 question = Question.objects.create(**filter)
+                Question.objects.filter(**filter).update(**update_filter)
                 logger.info(f"Created question: {questions['fi']}")
                 num_created += 1
             else:
                 logger.info(f"Found question: {questions['fi']}")
+                Question.objects.filter(**filter).update(**update_filter)
+
                 question = queryset.first()
                 id = queryset.first().id
                 if id in questions_to_delete:
@@ -251,7 +269,9 @@ def save_questions(excel_data: pd.DataFrame, results: list):
                 option, _ = Option.objects.get_or_create(
                     question=question, order_number=option_order_number
                 )
-
+            if is_any_substring_in_string(OTHER_STRING_CONTAINS, str(val_str)):
+                option.is_other = True
+                option.save()
             option_order_number += 1
             save_translated_field(option, "value", get_language_dict(val_str))
             for a_i, a_c in enumerate(RESULT_COLUMNS):
