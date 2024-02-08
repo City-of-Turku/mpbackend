@@ -47,6 +47,7 @@ class Option(models.Model):
     )
     results = models.ManyToManyField("Result", related_name="options")
     order_number = models.PositiveSmallIntegerField(null=True)
+    is_other = models.BooleanField(default=False, verbose_name="is other textfield")
 
     class Meta:
         ordering = ["question__number", "sub_question__question__number"]
@@ -72,8 +73,10 @@ class Answer(models.Model):
         "account.User", related_name="answers", on_delete=models.CASCADE
     )
     option = models.ForeignKey(
-        "Option", related_name="answers", on_delete=models.CASCADE
+        "Option", related_name="answers", null=True, on_delete=models.CASCADE
     )
+    other = models.TextField(null=True, blank=True)
+
     question = models.ForeignKey(
         "Question", related_name="answers", null=True, on_delete=models.CASCADE
     )
@@ -84,15 +87,13 @@ class Answer(models.Model):
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["user", "option"], name="unique_user_and_option"
-            )
-        ]
         ordering = ["id"]
 
-    def __str__(self):
-        return f"{self.option.value}"
+
+class AnswerOther(Answer):
+    # Proxy model that allows registerin Answer model twice to the Admin
+    class Meta:
+        proxy = True
 
 
 class QuestionCondition(models.Model):

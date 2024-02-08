@@ -506,10 +506,11 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
         responses={
             201: OpenApiResponse(description="created"),
             400: OpenApiResponse(
-                description="'option' or 'question' argument not given"
+                description="'option' or 'question' not found in body or for if 'is_other' is true for option"
+                " 'other' field is missing in body"
             ),
             404: OpenApiResponse(
-                description="'option', 'question' or 'sub_question'  not found"
+                description="'option', 'question' or 'sub_question' not found"
             ),
             405: OpenApiResponse(
                 description="Question or sub question condition not met,"
@@ -566,7 +567,6 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
                     f"Option {option_id} not found or wrong related question.",
                     status=status.HTTP_404_NOT_FOUND,
                 )
-
         question_condition_qs = QuestionCondition.objects.filter(question=question)
         if question_condition_qs.count() > 0:
             if not question_condition_met(question_condition_qs, user):
@@ -586,6 +586,14 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
                 )
         if user:
             filter = {"user": user, "question": question, "sub_question": sub_question}
+            if option.is_other:
+                other = request.data.get("other", None)
+                if not other:
+                    return Response(
+                        "'other' not found in body, required if is_other field is true for option.",
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                filter["other"] = other
             queryset = Answer.objects.filter(**filter)
             if queryset.count() == 0:
                 filter["option"] = option

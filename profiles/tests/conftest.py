@@ -56,6 +56,7 @@ def sub_questions(questions):
     SubQuestion.objects.create(
         question=question, description="Do you drive yourself?", order_number=0
     )
+
     return SubQuestion.objects.all()
 
 
@@ -69,7 +70,6 @@ def options(questions, sub_questions, results):
     option_no.results.add(negative_result)
     option_yes = Option.objects.create(value="yes", question=question1)
     option_yes.results.add(positive_result)
-
     train_sub_q = sub_questions.get(description="train")
     car_sub_q = sub_questions.get(description="car")
     Option.objects.create(value="never", sub_question=train_sub_q)
@@ -81,6 +81,8 @@ def options(questions, sub_questions, results):
     question3 = Question.objects.get(number="3")
     Option.objects.create(value="fast", question=question3)
     Option.objects.create(value="easy", question=question3)
+    Option.objects.create(value="other", question=question3, is_other=True)
+
     Option.objects.create(
         value="yes I drive",
         sub_question=SubQuestion.objects.get(description="Do you drive yourself?"),
@@ -145,6 +147,9 @@ def users():
     Profile.objects.create(user=user)
     user = User.objects.create(username="car and train user")
     Profile.objects.create(user=user)
+    user = User.objects.create(username="no answers user")
+    Profile.objects.create(user=user)
+
     return User.objects.all()
 
 
