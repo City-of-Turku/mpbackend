@@ -78,6 +78,7 @@ class SubQuestionRequestSerializer(serializers.Serializer):
 class AnswerRequestSerializer(QuestionRequestSerializer):
     option = serializers.IntegerField()
     sub_question = serializers.IntegerField(required=False)
+    other = serializers.CharField(required=False)
 
 
 class InConditionResponseSerializer(serializers.Serializer):
