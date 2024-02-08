@@ -42,9 +42,7 @@ def questions():
         question="How often do you use following means of public transport?", number="2"
     )
     Question.objects.create(question="Why do you use train?", number="3")
-
     Question.objects.create(question="Questions about car driving", number="4")
-
     return Question.objects.all()
 
 
