@@ -81,7 +81,7 @@ def test_import_questions():
     )
     assert Option.objects.filter(sub_question=joukkoliikenne).count() == 12
     option_saa = Option.objects.get(sub_question=joukkoliikenne, order_number=3)
-    assert option_saa.value == "säätila (sade, tuuli, jne.)"
+    assert option_saa.value == "Säätila (sade, tuuli, jne.)."
     option_saa_results = option_saa.results.all()
     assert option_saa_results.count() == 3
     assert option_saa_results[0].topic_fi == "Joukkoliikenteen käyttäjä"
@@ -96,7 +96,7 @@ def test_import_questions():
 
     question8 = Question.objects.get(number="8")
     assert question8.options.count() == 5
-    assert question8.options.all().order_by("id")[4].value_en == "Other:"
+    assert question8.options.all().order_by("id")[4].value_en == "Other"
     # Test question condition
     assert QuestionCondition.objects.all().count() == 9
     conditions = QuestionCondition.objects.filter(question=question8)
@@ -116,7 +116,7 @@ def test_import_questions():
 
     # Test other options
     other_options_qs = Option.objects.filter(is_other=True)
-    assert other_options_qs.count() == 11
+    assert other_options_qs.count() == 12
     assert other_options_qs.first().question == Question.objects.get(number="1a")
     # Test that rows are preserved and duplicates are not generated
     import_command()
@@ -141,4 +141,4 @@ def test_import_questions():
     assert Option.objects.filter(question=question8).count() == 5
     condition = QuestionCondition.objects.get(question=question8)
     assert condition.question_condition == Question.objects.get(number="7")
-    assert condition.option_conditions.all()[0].value_fi == "Ei"
+    assert condition.option_conditions.all()[0].value_fi == "Ei."
