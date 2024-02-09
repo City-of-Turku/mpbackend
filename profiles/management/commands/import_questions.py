@@ -173,6 +173,8 @@ def save_questions(excel_data: pd.DataFrame, results: list):
     option_order_number = None
     num_created = 0
     questions_to_delete = list(Question.objects.all().values_list("id", flat=True))
+    options_to_delete = list(Option.objects.all().values_list("id", flat=True))
+
     for index, row_data in excel_data.iterrows():
         # The end of the questions sheet includes questions that will not be imported.
         if index > 201:
@@ -277,7 +279,11 @@ def save_questions(excel_data: pd.DataFrame, results: list):
             for a_i, a_c in enumerate(RESULT_COLUMNS):
                 if row_data[a_c] == IS_ANIMAL:
                     option.results.add(results[a_i])
+            if option.id in options_to_delete:
+                options_to_delete.remove(option.id)
     Question.objects.filter(id__in=questions_to_delete).delete()
+    Option.objects.filter(id__in=options_to_delete).delete()
+
     logger.info(f"Created {num_created} questions")
 
 
