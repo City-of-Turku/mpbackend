@@ -50,7 +50,7 @@ class Option(models.Model):
     is_other = models.BooleanField(default=False, verbose_name="is other textfield")
 
     class Meta:
-        ordering = ["question__number", "sub_question__question__number"]
+        ordering = ["order_number"]
 
     def __str__(self):
         return f"Value: {self.value}"
