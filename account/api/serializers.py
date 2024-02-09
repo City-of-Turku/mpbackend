@@ -46,6 +46,7 @@ class ProfileSerializer(serializers.HyperlinkedModelSerializer):
             "optional_postal_code",
             "is_filled_for_fun",
             "result_can_be_used",
+            "gender",
         ]
 
 

@@ -76,6 +76,15 @@ def test_profile_created(api_client):
 
 
 @pytest.mark.django_db
+def test_profile_patch_geneder(api_client_authenticated, users, profiles):
+    user = users.get(username="test1")
+    url = reverse("account:profiles-detail", args=[user.id])
+    patch(api_client_authenticated, url, {"gender": "X"})
+    user.refresh_from_db()
+    assert user.profile.gender == "X"
+
+
+@pytest.mark.django_db
 def test_profile_patch_postal_code(api_client_authenticated, users, profiles):
     user = users.get(username="test1")
     url = reverse("account:profiles-detail", args=[user.id])
