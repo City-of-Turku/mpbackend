@@ -51,7 +51,7 @@ def test_postal_code_result(api_client, questions, sub_questions, options, resul
         elif postal_code_location == PostalCodeType.OPTIONAL_POSTAL_CODE:
             user.profile.optional_postal_code = postal_codes[index]
         user.profile.save()
-        # negative options(answer) has index 0, positive 1 in fixure opiton querysets
+        # negative options(answer) has index 0, positive 1 in fixures
         # negative are no/never and positive are yes/daily
         # Make 2/3 of answers negative
         if i % 3 < 2:
@@ -129,12 +129,18 @@ def test_postal_code_result(api_client, questions, sub_questions, options, resul
     )
     response = api_client.get(url)
     assert response.json()["count"] == 2
-    url = reverse("profiles:postalcoderesult-list") + "?postal_code_type="
+    url = (
+        reverse("profiles:postalcoderesult-list")
+        + f"?postal_code_string={postal_code_20100.postal_code}"
+    )
     response = api_client.get(url)
-    assert response.json()["count"] == 2
-    url = reverse("profiles:postalcoderesult-list") + "?postal_code_type=&postal_code="
+    assert response.json()["count"] == 4
+    url = (
+        reverse("profiles:postalcoderesult-list")
+        + f"?postal_code_type_string={PostalCodeType.HOME_POSTAL_CODE}"
+    )
     response = api_client.get(url)
-    assert response.json()["count"] == 2
+    assert response.json()["count"] == 4
 
 
 @pytest.mark.django_db
@@ -145,7 +151,21 @@ def test_non_existing_postal_code_type(api_client):
 
 
 @pytest.mark.django_db
+def test_non_existing_postal_code_type_string(api_client):
+    url = reverse("profiles:postalcoderesult-list") + "?postal_code_type_string=Homer"
+    response = api_client.get(url)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_non_existing_postal_code(api_client):
     url = reverse("profiles:postalcoderesult-list") + "?postal_code=42"
+    response = api_client.get(url)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_non_existing_postal_code_string(api_client):
+    url = reverse("profiles:postalcoderesult-list") + "?postal_code_string=42042"
     response = api_client.get(url)
     assert response.status_code == 404
