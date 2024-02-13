@@ -110,9 +110,26 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 
 class PostalCodeResultSerializer(serializers.ModelSerializer):
+    result_topic_en = serializers.CharField(source="result.topic_en", read_only=True)
+    postal_code_string = serializers.CharField(
+        source="postal_code.postal_code", read_only=True
+    )
+    postal_code_type_string = serializers.CharField(
+        source="postal_code_type.type_name", read_only=True
+    )
+
     class Meta:
         model = PostalCodeResult
-        fields = "__all__"
+        fields = [
+            "id",
+            "postal_code",
+            "postal_code_string",
+            "postal_code_type",
+            "postal_code_type_string",
+            "result",
+            "result_topic_en",
+            "count",
+        ]
 
 
 class PostalCodeSerializer(serializers.ModelSerializer):
