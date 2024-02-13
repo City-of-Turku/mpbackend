@@ -4,6 +4,7 @@ import uuid
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.utils.module_loading import import_string
 from drf_spectacular.utils import (
     extend_schema,
@@ -14,6 +15,7 @@ from drf_spectacular.utils import (
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
+from rest_framework.exceptions import ParseError
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -639,6 +641,14 @@ POSTAL_CODE_PARAM = OpenApiParameter(
     required=False,
     type=int,
 )
+
+POSTAL_CODE_STRING_PARAM = OpenApiParameter(
+    name="postal_code_string",
+    location=OpenApiParameter.QUERY,
+    description="string value of the postal_code, i.e., 20210",
+    required=False,
+    type=str,
+)
 POSTAL_CODE_TYPE_PARAM = OpenApiParameter(
     name="postal_code_type",
     location=OpenApiParameter.QUERY,
@@ -646,11 +656,23 @@ POSTAL_CODE_TYPE_PARAM = OpenApiParameter(
     required=False,
     type=int,
 )
+POSTAL_CODE_TYPE_STRING_PARAM = OpenApiParameter(
+    name="postal_code_type_string",
+    location=OpenApiParameter.QUERY,
+    description="string value of the postal code type, i.e.m Home",
+    required=False,
+    type=int,
+)
 
 
 @extend_schema_view(
     list=extend_schema(
-        parameters=[POSTAL_CODE_PARAM, POSTAL_CODE_TYPE_PARAM],
+        parameters=[
+            POSTAL_CODE_PARAM,
+            POSTAL_CODE_TYPE_PARAM,
+            POSTAL_CODE_STRING_PARAM,
+            POSTAL_CODE_TYPE_STRING_PARAM,
+        ],
         description="Returns aggregated results per postal code and/or postal code type.",
     )
 )
@@ -662,26 +684,45 @@ class PostalCodeResultViewSet(viewsets.ReadOnlyModelViewSet):
         queryset = None
         qs1 = None
         qs2 = None
-        postal_code_id = request.query_params.get("postal_code", None)
-        postal_code_type_id = request.query_params.get("postal_code_type", None)
-        if postal_code_id:
+        postal_code_id = None
+        postal_code_type_id = None
+        params = request.query_params
+        if "postal_code" in params:
             try:
-                postal_code = PostalCode.objects.get(id=postal_code_id)
-            except PostalCode.DoesNotExist:
+                postal_code_id = int(params.get("postal_code", None))
+            except ValueError:
+                raise ParseError("'postal_code' needs to be int")
+
+        if "postal_code_type" in params:
+            try:
+                postal_code_type_id = int(params.get("postal_code_type", None))
+            except ValueError:
+                raise ParseError("'postal_code_type' needs to be int")
+        postal_code_string = params.get("postal_code_string", None)
+        postal_code_type_string = params.get("postal_code_type_string", None)
+
+        if postal_code_id or postal_code_string:
+            postal_code = PostalCode.objects.filter(
+                Q(id=postal_code_id) | Q(postal_code=postal_code_string)
+            ).first()
+
+            if postal_code is None:
                 return Response(
-                    f"PostalCode {postal_code_id} not found",
+                    f"PostalCode '{postal_code_id if postal_code_id else postal_code_string}' not found",
                     status=status.HTTP_404_NOT_FOUND,
                 )
         else:
             # Postal code is not mandatory
             postal_code = None
 
-        if postal_code_type_id:
-            try:
-                postal_code_type = PostalCodeType.objects.get(id=postal_code_type_id)
-            except PostalCodeType.DoesNotExist:
+        if postal_code_type_id or postal_code_type_string:
+            postal_code_type = PostalCodeType.objects.filter(
+                Q(id=postal_code_type_id) | Q(type_name=postal_code_type_string)
+            ).first()
+            if postal_code_type is None:
                 return Response(
-                    f"PostalCodeType {postal_code_type_id} not found",
+                    f"PostalCodeType '{postal_code_type_id if postal_code_type else postal_code_type_string}'"
+                    " not found",
                     status=status.HTTP_404_NOT_FOUND,
                 )
         else:
@@ -690,9 +731,9 @@ class PostalCodeResultViewSet(viewsets.ReadOnlyModelViewSet):
 
         # Make possible to query with None value in query params
         # as all users do not provide a postal code
-        if "postal_code" in request.query_params:
+        if postal_code:
             qs1 = PostalCodeResult.objects.filter(postal_code=postal_code)
-        if "postal_code_type" in request.query_params:
+        if postal_code_type:
             qs2 = PostalCodeResult.objects.filter(postal_code_type=postal_code_type)
 
         if qs1 and qs2:
@@ -723,4 +764,4 @@ class PostalCodeTypeViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PostalCodeTypeSerializer
 
 
-register_view(PostalCodeViewSet, "postalcodetype")
+register_view(PostalCodeTypeViewSet, "postalcodetype")
