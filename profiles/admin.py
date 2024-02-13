@@ -120,6 +120,8 @@ class PostalCodeTypeAdmin(
 class PostalCodeResultAdmin(
     DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
 ):
+    list_display = ("postal_code", "postal_code_type", "result", "count")
+
     class Meta:
         model = PostalCodeResult
 
