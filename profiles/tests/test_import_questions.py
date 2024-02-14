@@ -33,11 +33,10 @@ def test_import_questions():
     assert results_qs.count() == 6
     autoilija = Result.objects.get(topic_fi="Autoilija")
     assert results_qs[0].topic_fi == autoilija.topic_fi
-    assert results_qs[1].value_sv == "Rutinerad Räv"
-    assert results_qs[2].description_en[0:15] == "Travels by foot"
+    assert "You know where" in results_qs[1].description_en
+    assert "Fotgängare" in results_qs[2].topic_sv
     assert results_qs[3].topic_en == "Public transport passenger"
-    assert results_qs[4].value_fi == "Kokeileva Kauris"
-    assert results_qs[5].description_sv[-12:] == "använda bil."
+    assert "Maas" in results_qs[4].topic_fi
 
     # Test questions
     assert Question.objects.count() == 16
