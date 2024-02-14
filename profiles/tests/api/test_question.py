@@ -319,8 +319,8 @@ def test_questions(api_client, questions, question_conditions, options, results)
         == question.options.first().results.count()
     )
     assert (
-        json_response["options"][0]["results"][0]["value"]
-        == results.filter(options__question=question).first().value
+        json_response["options"][0]["results"][0]["topic"]
+        == results.filter(options__question=question).first().topic
     )
 
 

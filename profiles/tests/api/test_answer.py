@@ -34,7 +34,7 @@ def test_post_answer(api_client_authenticated, users, questions, options):
     assert response.status_code == 201
     assert Answer.objects.count() == 1
     user.refresh_from_db()
-    assert user.result.value == "negative result"
+    assert user.result.topic == "negative"
 
 
 @pytest.mark.django_db
@@ -129,7 +129,7 @@ def test_answer_get_result(api_client_authenticated, users, answers):
     url = reverse("profiles:answer-get-result")
     response = api_client_authenticated.get(url)
     assert response.status_code == 200
-    assert response.json()["value"] == "negative result"
+    assert response.json()["topic"] == "negative"
 
 
 @pytest.mark.django_db
