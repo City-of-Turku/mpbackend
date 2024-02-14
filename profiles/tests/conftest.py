@@ -63,8 +63,8 @@ def sub_questions(questions):
 @pytest.mark.django_db
 @pytest.fixture
 def options(questions, sub_questions, results):
-    positive_result = results.get(value="positive result")
-    negative_result = results.get(value="negative result")
+    positive_result = results.get(topic="positive")
+    negative_result = results.get(topic="negative")
     question1 = questions.get(number="1")
     option_no = Option.objects.create(value="no", question=question1)
     option_no.results.add(negative_result)
@@ -93,8 +93,8 @@ def options(questions, sub_questions, results):
 @pytest.mark.django_db
 @pytest.fixture
 def results():
-    Result.objects.create(topic="negative", value="negative result")
-    Result.objects.create(topic="positive", value="positive result")
+    Result.objects.create(topic="negative", description="negative result")
+    Result.objects.create(topic="positive", description="positive result")
     return Result.objects.all()
 
 

@@ -91,13 +91,13 @@ def get_and_create_results(data: pd.DataFrame) -> list:
     for i, column in enumerate(columns):
         col_data = data[column]
         topic = get_language_dict(data.columns[RESULT_COLUMNS[0] + i])
-        value = get_language_dict(col_data[1])
         description = get_language_dict(col_data[0])
-        filter = {}
+        filter = {"topic": topic["fi"]}
+        update_filter = {}
+
         for lang in LANGUAGES:
-            filter[f"topic_{lang}"] = topic[lang]
-            filter[f"value_{lang}"] = value[lang]
-            filter[f"description_{lang}"] = description[lang]
+            update_filter[f"topic_{lang}"] = topic[lang]
+            update_filter[f"description_{lang}"] = description[lang]
         queryset = Result.objects.filter(**filter)
         if queryset.count() == 0:
             result = Result.objects.create(**filter)
@@ -108,6 +108,8 @@ def get_and_create_results(data: pd.DataFrame) -> list:
             id = queryset.first().id
             if id in results_to_delete:
                 results_to_delete.remove(id)
+
+        Result.objects.filter(**filter).update(**update_filter)
 
         results.append(result)
     Result.objects.filter(id__in=results_to_delete).delete()
@@ -218,17 +220,16 @@ def save_questions(excel_data: pd.DataFrame, results: list):
 
             if queryset.count() == 0:
                 question = Question.objects.create(**filter)
-                Question.objects.filter(**filter).update(**update_filter)
                 logger.info(f"Created question: {questions['fi']}")
                 num_created += 1
             else:
                 logger.info(f"Found question: {questions['fi']}")
-                Question.objects.filter(**filter).update(**update_filter)
-
                 question = queryset.first()
                 id = queryset.first().id
                 if id in questions_to_delete:
                     questions_to_delete.remove(id)
+
+            Question.objects.filter(**filter).update(**update_filter)
             if row_data[CONDITION_COLUMN]:
                 create_conditions(row_data[CONDITION_COLUMN], question)
             sub_question_order_number = 0
