@@ -33,6 +33,7 @@ SUB_QUESTION_CONDITION_COLUMN = 8
 OPTION_COLUMN = 9
 RESULT_COLUMNS = [10, 11, 12, 13, 14, 15]
 OTHER_STRING_CONTAINS = ["/Other", "Something else"]
+SKIP_QUESTIONS = ["11", "12", "13", "14", "15", "17", "18", "19", "20"]
 
 
 def get_root_dir() -> str:
@@ -176,17 +177,18 @@ def save_questions(excel_data: pd.DataFrame, results: list):
     num_created = 0
     questions_to_delete = list(Question.objects.all().values_list("id", flat=True))
     options_to_delete = list(Option.objects.all().values_list("id", flat=True))
-
+    in_skipped_question = False
     for index, row_data in excel_data.iterrows():
-        # The end of the questions sheet includes questions that will not be imported.
-        if index > 201:
-            break
         try:
             question_number = str(row_data[QUESTION_NUMBER_COLUMN])
         except TypeError:
             continue
-        # Rows containg the question starts with a digit
-        if question_number[0].isdigit():
+        if question_number in SKIP_QUESTIONS:
+            in_skipped_question = True
+
+        # Row containing the question starts with a digit
+        if question_number[0].isdigit() and question_number not in SKIP_QUESTIONS:
+            in_skipped_question = False
             questions = get_language_dict(row_data[QUESTION_COLUMN])
             descriptions = get_language_dict(row_data[QUESTION_DESCRIPTION_COLUMN])
             number_of_options_to_choose = row_data[NUMBER_OF_OPTIONS_TO_CHOOSE]
@@ -235,7 +237,8 @@ def save_questions(excel_data: pd.DataFrame, results: list):
             sub_question_order_number = 0
             option_order_number = 0
             sub_question = None
-
+        elif in_skipped_question:
+            continue
         # Create SubQuestion
         if question and row_data[SUB_QUESTION_COLUMN]:
             logger.info(f"created sub question {row_data[SUB_QUESTION_COLUMN]}")
