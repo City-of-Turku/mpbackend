@@ -11,7 +11,7 @@ class Question(models.Model):
     )
 
     class Meta:
-        ordering = ["number"]
+        ordering = ["id"]
 
     def __str__(self):
         return f"question number:{self.number}, question: {self.question}"
