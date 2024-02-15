@@ -43,6 +43,38 @@ def test_questions_condition_states_not_authenticated(
 
 
 @pytest.mark.django_db
+def test_questions_condition_states_after_post_answer(
+    api_client, users, questions, question_conditions, options
+):
+    user = users.get(username="no answers user")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    url = reverse("profiles:question-get-questions-conditions-states")
+    response = api_client.get(url)
+    assert response.status_code == 200
+    for item in response.json():
+        assert item["state"] is False
+    car_question = questions.get(number="1")
+    option_yes = options.get(value="yes")
+    answer_url = reverse("profiles:answer-list")
+    response = api_client.post(
+        answer_url, {"option": option_yes.id, "question": car_question.id}
+    )
+    assert response.status_code == 201
+    assert Answer.objects.count() == 1
+    url = reverse("profiles:question-get-questions-conditions-states")
+    response = api_client.get(url)
+    assert response.status_code == 200
+    how_often_car_question = questions.get(number="1b")
+    how_often_car_question_in_response = False
+    for item in response.json():
+        if item["id"] == how_often_car_question.id:
+            how_often_car_question_in_response = True
+            assert item["state"] is True
+    assert how_often_car_question_in_response is True
+
+
+@pytest.mark.django_db
 def test_questions_condition_states(
     api_client, users, answers, questions, question_conditions
 ):

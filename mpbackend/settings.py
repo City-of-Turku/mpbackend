@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "account.apps.AccountConfig",
     "drf_spectacular",
     "corsheaders",
+    "django_filters",
 ]
 
 MIDDLEWARE = [

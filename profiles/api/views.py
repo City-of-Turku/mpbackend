@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
 from django.utils.module_loading import import_string
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import (
     extend_schema,
     extend_schema_view,
@@ -52,6 +53,8 @@ from profiles.models import (
     SubQuestionCondition,
 )
 from profiles.utils import generate_password, get_user_result
+
+from .utils import PostalCodeResultFilter
 
 logger = logging.getLogger(__name__)
 
@@ -229,7 +232,6 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     )
     @action(detail=False, methods=["GET"], permission_classes=[IsAuthenticated])
     def get_questions_conditions_states(self, request):
-
         questions_with_cond_qs = Question.objects.filter(
             question_conditions__isnull=False
         )
@@ -639,6 +641,14 @@ POSTAL_CODE_PARAM = OpenApiParameter(
     required=False,
     type=int,
 )
+
+POSTAL_CODE_STRING_PARAM = OpenApiParameter(
+    name="postal_code_string",
+    location=OpenApiParameter.QUERY,
+    description="string value of the postal_code, i.e., 20210",
+    required=False,
+    type=str,
+)
 POSTAL_CODE_TYPE_PARAM = OpenApiParameter(
     name="postal_code_type",
     location=OpenApiParameter.QUERY,
@@ -646,62 +656,35 @@ POSTAL_CODE_TYPE_PARAM = OpenApiParameter(
     required=False,
     type=int,
 )
+POSTAL_CODE_TYPE_STRING_PARAM = OpenApiParameter(
+    name="postal_code_type_string",
+    location=OpenApiParameter.QUERY,
+    description="string value of the postal code type, i.e.m Home",
+    required=False,
+    type=int,
+)
 
 
 @extend_schema_view(
     list=extend_schema(
-        parameters=[POSTAL_CODE_PARAM, POSTAL_CODE_TYPE_PARAM],
+        parameters=[
+            POSTAL_CODE_PARAM,
+            POSTAL_CODE_TYPE_PARAM,
+            POSTAL_CODE_STRING_PARAM,
+            POSTAL_CODE_TYPE_STRING_PARAM,
+        ],
         description="Returns aggregated results per postal code and/or postal code type.",
     )
 )
 class PostalCodeResultViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PostalCodeResult.objects.all()
     serializer_class = PostalCodeResultSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = PostalCodeResultFilter
+    filterset_fields = PostalCodeResultFilter.validate_fields
 
     def list(self, request, *args, **kwargs):
-        queryset = None
-        qs1 = None
-        qs2 = None
-        postal_code_id = request.query_params.get("postal_code", None)
-        postal_code_type_id = request.query_params.get("postal_code_type", None)
-        if postal_code_id:
-            try:
-                postal_code = PostalCode.objects.get(id=postal_code_id)
-            except PostalCode.DoesNotExist:
-                return Response(
-                    f"PostalCode {postal_code_id} not found",
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-        else:
-            # Postal code is not mandatory
-            postal_code = None
-
-        if postal_code_type_id:
-            try:
-                postal_code_type = PostalCodeType.objects.get(id=postal_code_type_id)
-            except PostalCodeType.DoesNotExist:
-                return Response(
-                    f"PostalCodeType {postal_code_type_id} not found",
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-        else:
-            # Postal code type is not mandatory
-            postal_code_type = None
-
-        # Make possible to query with None value in query params
-        # as all users do not provide a postal code
-        if "postal_code" in request.query_params:
-            qs1 = PostalCodeResult.objects.filter(postal_code=postal_code)
-        if "postal_code_type" in request.query_params:
-            qs2 = PostalCodeResult.objects.filter(postal_code_type=postal_code_type)
-
-        if qs1 and qs2:
-            queryset = qs1.intersection(qs2)
-        elif qs1 or qs2:
-            queryset = qs1 if qs1 else qs2
-        else:
-            queryset = self.queryset
-
+        queryset = self.filter_queryset(self.queryset)
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)
         return self.get_paginated_response(serializer.data)
@@ -723,4 +706,4 @@ class PostalCodeTypeViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PostalCodeTypeSerializer
 
 
-register_view(PostalCodeViewSet, "postalcodetype")
+register_view(PostalCodeTypeViewSet, "postalcodetype")
