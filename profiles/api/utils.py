@@ -1,5 +1,7 @@
-from django_filters import rest_framework as filters
+import django_filters
 from rest_framework.exceptions import ValidationError
+
+from profiles.models import PostalCodeResult
 
 
 class CustomValidationError(ValidationError):
@@ -23,10 +25,17 @@ class PostalCodeResultParamValidator:
             raise CustomValidationError("'postal_code_type' needs to be int")
 
 
-class PostalCodeResultFilter(filters.FilterSet, PostalCodeResultParamValidator):
+class PostalCodeResultFilter(django_filters.FilterSet, PostalCodeResultParamValidator):
     validate_fields = (
         "postal_code",
         "postal_code_type",
+    )
+    postal_code = django_filters.NumberFilter()
+    postal_code_type = django_filters.NumberFilter()
+
+    postal_code_string = django_filters.CharFilter(method="filter_postal_code_string")
+    postal_code_type_string = django_filters.CharFilter(
+        method="filter_postal_code_type_string"
     )
 
     def __init__(self, *args, **kwargs):
@@ -35,3 +44,13 @@ class PostalCodeResultFilter(filters.FilterSet, PostalCodeResultParamValidator):
             validator = getattr(self, "validate_%s" % query_key, None)
             if validator:
                 validator(query_value)
+
+    def filter_postal_code_string(self, queryset, name, value):
+        return queryset.filter(postal_code__postal_code=value)
+
+    def filter_postal_code_type_string(self, queryset, name, value):
+        return queryset.filter(postal_code_type__type_name=value)
+
+    class Meta:
+        model = PostalCodeResult
+        fields = ("postal_code", "postal_code_type")

@@ -147,25 +147,29 @@ def test_postal_code_result(api_client, questions, sub_questions, options, resul
 def test_non_existing_postal_code_type(api_client):
     url = reverse("profiles:postalcoderesult-list") + "?postal_code_type=42"
     response = api_client.get(url)
-    assert response.status_code == 404
+    assert response.status_code == 200
+    assert response.json()["count"] == 0
 
 
 @pytest.mark.django_db
 def test_non_existing_postal_code_type_string(api_client):
     url = reverse("profiles:postalcoderesult-list") + "?postal_code_type_string=Homer"
     response = api_client.get(url)
-    assert response.status_code == 404
+    assert response.status_code == 200
+    assert response.json()["count"] == 0
 
 
 @pytest.mark.django_db
 def test_non_existing_postal_code(api_client):
     url = reverse("profiles:postalcoderesult-list") + "?postal_code=42"
     response = api_client.get(url)
-    assert response.status_code == 404
+    assert response.status_code == 200
+    assert response.json()["count"] == 0
 
 
 @pytest.mark.django_db
 def test_non_existing_postal_code_string(api_client):
     url = reverse("profiles:postalcoderesult-list") + "?postal_code_string=42042"
     response = api_client.get(url)
-    assert response.status_code == 404
+    assert response.status_code == 200
+    assert response.json()["count"] == 0

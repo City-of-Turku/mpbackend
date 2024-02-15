@@ -4,7 +4,6 @@ import uuid
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
-from django.db.models import Q
 from django.utils.module_loading import import_string
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import (
@@ -686,62 +685,6 @@ class PostalCodeResultViewSet(viewsets.ReadOnlyModelViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.queryset)
-        qs1 = None
-        qs2 = None
-        params = request.query_params
-        postal_code_id = params.get("postal_code", None)
-        postal_code_type_id = params.get("postal_code_type", None)
-        postal_code_string = params.get("postal_code_string", None)
-        postal_code_type_string = params.get("postal_code_type_string", None)
-        postal_code_query = Q()
-
-        if postal_code_id:
-            postal_code_query |= Q(id=postal_code_id)
-        if postal_code_string:
-            postal_code_query |= Q(postal_code=postal_code_string)
-
-        if postal_code_query:
-            postal_code = PostalCode.objects.filter(postal_code_query).first()
-            if postal_code is None:
-                return Response(
-                    f"PostalCode '{postal_code_id if postal_code_id else postal_code_string}'"
-                    " not found",
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-        else:
-            postal_code = None
-
-        postal_code_type_query = Q()
-
-        if postal_code_type_id:
-            postal_code_type_query |= Q(id=postal_code_type_id)
-        if postal_code_type_string:
-            postal_code_type_query |= Q(type_name=postal_code_type_string)
-
-        if postal_code_type_query:
-            postal_code_type = PostalCodeType.objects.filter(
-                postal_code_type_query
-            ).first()
-            if postal_code_type is None:
-                return Response(
-                    f"PostalCodeType '{postal_code_type_id if postal_code_type else postal_code_type_string}'"
-                    " not found",
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-        else:
-            postal_code_type = None
-
-        if postal_code:
-            qs1 = PostalCodeResult.objects.filter(postal_code=postal_code)
-        if postal_code_type:
-            qs2 = PostalCodeResult.objects.filter(postal_code_type=postal_code_type)
-
-        if qs1 and qs2:
-            queryset = qs1.intersection(qs2)
-        elif qs1 or qs2:
-            queryset = qs1 if qs1 else qs2
-        else:
-            queryset = self.queryset
         page = self.paginate_queryset(queryset)
         serializer = self.serializer_class(page, many=True)
         return self.get_paginated_response(serializer.data)
