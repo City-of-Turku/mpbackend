@@ -179,15 +179,12 @@ def save_questions(excel_data: pd.DataFrame, results: list):
     options_to_delete = list(Option.objects.all().values_list("id", flat=True))
     in_skipped_question = False
     for index, row_data in excel_data.iterrows():
-        try:
-            question_number = str(row_data[QUESTION_NUMBER_COLUMN])
-        except TypeError:
-            continue
+        question_number = str(row_data[QUESTION_NUMBER_COLUMN])
         if question_number in SKIP_QUESTIONS:
             in_skipped_question = True
-
+            continue
         # Row containing the question starts with a digit
-        if question_number[0].isdigit() and question_number not in SKIP_QUESTIONS:
+        if question_number[0].isdigit():
             in_skipped_question = False
             questions = get_language_dict(row_data[QUESTION_COLUMN])
             descriptions = get_language_dict(row_data[QUESTION_DESCRIPTION_COLUMN])
