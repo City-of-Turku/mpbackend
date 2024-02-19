@@ -610,9 +610,14 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
             return Response("Not created", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @extend_schema(
-        description="Return the current result(animal) of the authenticated user",
+        description="Return the current result(animal) of the authenticated user.",
         examples=None,
-        responses={200: ResultSerializer},
+        responses={
+            200: ResultSerializer,
+            400: OpenApiResponse(
+                description="not enough answers provided.",
+            ),
+        },
     )
     @action(
         detail=False,
@@ -627,8 +632,11 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
         result = get_user_result(user)
-        serializer = ResultSerializer(result)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        if result:
+            serializer = ResultSerializer(result)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 register_view(AnswerViewSet, "answer")
