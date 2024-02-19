@@ -2,18 +2,37 @@ import secrets
 import string
 
 from account.models import User
-from profiles.models import Answer, Result
+from profiles.models import Answer, Option, Result
+
+
+def get_num_results_per_option() -> dict:
+    results = {}
+    for result in Result.objects.all():
+        results[result] = Option.objects.filter(results=result).count()
+    return results
 
 
 def get_user_result(user: User) -> Result:
+    num_results_in_option = get_num_results_per_option()
     answer_qs = Answer.objects.filter(user=user)
     if answer_qs.count() == 0:
         return None
 
-    results = {r: 0 for r in Result.objects.all()}
+    # calculate the cumulative values of options for every result
+    cum_results = {r: 0 for r in Result.objects.all()}
     for answer in answer_qs:
         for result in answer.option.results.all():
-            results[result] += 1
+            cum_results[result] += 1
+
+    # If all cumulative values are 0, return None
+    if all(value == 0 for value in cum_results.values()):
+        return None
+    # calculate the relative result for every result (animal)
+    results = {}
+    for result in Result.objects.all():
+        results[result] = cum_results[result] / num_results_in_option[result]
+
+    # The result is the highest relative result
     result = max(results, key=results.get)
     return result
 
