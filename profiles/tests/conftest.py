@@ -78,10 +78,9 @@ def options_test_result(questions_test_result, results_test_result):
         for q_c, question in enumerate(questions):
             option = Option.objects.create(question=question, value=value)
             """
-            q1 has all results added to options
+            q1 has all the results added to the options
             q2 has NEG and OK
             q3 has only NEG
-
             """
             if q_c <= v_c:
                 option.results.add(result)
