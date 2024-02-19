@@ -90,13 +90,13 @@ class AnswerOtherAdmin(
 
     def question_description(self, obj):
         if obj.question:
-            return obj.question.question_en
+            return obj.question.question_fi
         else:
-            return obj.sub_question.question.question_en
+            return obj.sub_question.question.question_fi
 
     def sub_question_description(self, obj):
         if obj.sub_question:
-            return obj.sub_question.description_en
+            return obj.sub_question.description_fi
         return None
 
     class Meta:

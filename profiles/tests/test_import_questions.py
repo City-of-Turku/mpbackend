@@ -3,6 +3,7 @@ from io import StringIO
 import pytest
 from django.core.management import call_command
 
+from profiles.management.commands.import_questions import SKIP_QUESTIONS
 from profiles.models import (
     Option,
     Question,
@@ -39,7 +40,7 @@ def test_import_questions():
     assert "Maas" in results_qs[4].topic_fi
 
     # Test questions
-    assert Question.objects.count() == 16
+    assert Question.objects.count() == 17
     # Test question without sub questions
     question1b1 = Question.objects.get(number="1b1")
     assert question1b1.question_fi == "Miksi et koskaan kulje autolla?"
@@ -112,15 +113,17 @@ def test_import_questions():
     assert condition.option_conditions.count() == 4
     assert condition.option_conditions.all()[0].value == "1"
     assert condition.option_conditions.all()[3].value == "6-7"
-
+    assert Question.objects.get(number=16).options.count() == 5
+    for number in SKIP_QUESTIONS:
+        assert Question.objects.filter(number=number).count() == 0
     # Test other options
     other_options_qs = Option.objects.filter(is_other=True)
-    assert other_options_qs.count() == 12
+    assert other_options_qs.count() == 13
     assert other_options_qs.first().question == Question.objects.get(number="1a")
     # Test that rows are preserved and duplicates are not generated
     import_command()
     assert Result.objects.count() == 6
-    assert Question.objects.count() == 16
+    assert Question.objects.count() == 17
     assert QuestionCondition.objects.all().count() == 9
 
     assert question4.id == Question.objects.get(number="4").id
