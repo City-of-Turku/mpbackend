@@ -13,6 +13,11 @@ from profiles.models import (
     SubQuestionCondition,
 )
 
+POS = "pos"
+NEG = "neg"
+OK = "ok"
+YES_BIKE = "yes bike"
+
 
 @pytest.fixture
 def api_client():
@@ -28,9 +33,72 @@ def api_client_authenticated(users):
     return api_client
 
 
+@pytest.fixture
+def api_client_auth_no_answers(users):
+    user = users.get(username="no answers user")
+    token = Token.objects.create(user=user)
+    api_client = APIClient()
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    return api_client
+
+
 @pytest.fixture()
 def api_client_with_custom_ip_address(ip_address):
     return APIClient(REMOTE_ADDR=ip_address)
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def questions_test_result():
+    Question.objects.create(question="q1", number="1")
+    Question.objects.create(question="q2", number="2")
+    Question.objects.create(question="q3", number="3")
+    return Question.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def results_test_result():
+    values = [POS, OK, NEG]
+    for value in values:
+        Result.objects.create(topic=value, description=f"test_{value}")
+    return Result.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def options_test_result(questions_test_result, results_test_result):
+    q1 = questions_test_result.get(number="1")
+    q2 = questions_test_result.get(number="2")
+    q3 = questions_test_result.get(number="3")
+    questions = [q1, q2, q3]
+    values = [POS, OK, NEG]
+    for v_c, value in enumerate(values):
+        result = results_test_result.get(topic=value)
+        for q_c, question in enumerate(questions):
+            option = Option.objects.create(question=question, value=value)
+            """
+            q1 has all results added to options
+            q2 has NEG and OK
+            q3 has only NEG
+
+            """
+            if q_c <= v_c:
+                option.results.add(result)
+
+    return Option.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def options_with_multiple_results(questions_test_result, results_test_result):
+    q3 = questions_test_result.get(number="3")
+    pos_res = Result.objects.get(topic=POS)
+    ok_res = Result.objects.get(topic=OK)
+    option = Option.objects.create(question=q3, value=YES_BIKE)
+    option.results.add(pos_res)
+    option.results.add(ok_res)
+    return Option.objects.all()
 
 
 @pytest.mark.django_db
@@ -149,7 +217,6 @@ def users():
     Profile.objects.create(user=user)
     user = User.objects.create(username="no answers user")
     Profile.objects.create(user=user)
-
     return User.objects.all()
 
 
