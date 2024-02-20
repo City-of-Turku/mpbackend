@@ -9,7 +9,7 @@ Run application with `docker-compose up`
 This will startup and bind local postgres and mobilityprofile backend. 
 
 ### Runnig the application in production
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+`docker-compose -f docker-compose.yml -f docker-compose.prod.yml up`
 
 ### Importing questions
 To import questions run: `docker-compose run mpbackend import_questions`
@@ -51,4 +51,11 @@ createdb -O mobilityprofile -T template1 -l fi_FI.UTF-8 -E utf8 mobilityprofile
 ```
 ./manage.py import_questions
 ```
+
+7. Install Memcached
+```
+sudo apt update
+sudo apt install memcached
+```
+
 
