@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 import environ
@@ -26,6 +27,7 @@ env = environ.Env(
     MEDIA_URL=(str, "/media/"),
     STATIC_URL=(str, "/static/"),
     CORS_ORIGIN_WHITELIST=(list, []),
+    CACHE_LOCATION=(str, "127.0.0.1:11211"),
 )
 # WARN about env file not being preset. Here we pre-empt it.
 env_file_path = os.path.join(BASE_DIR, CONFIG_FILE_NAME)
@@ -69,6 +71,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # "mpbackend.middleware.TimingMiddleware",
 ]
 
 ROOT_URLCONF = "mpbackend.urls"
@@ -249,6 +252,13 @@ SPECTACULAR_SETTINGS = {
     # OTHER SETTINGS
     "PREPROCESSING_HOOKS": ["mpbackend.excluded_path.preprocessing_filter_spec"],
 }
-
 # After how many hours users authentication token is expired and deleted
 TOKEN_EXPIRED_AFTER_HOURS = 24
+
+if "pytest" not in sys.modules:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.memcached.PyMemcacheCache",
+            "LOCATION": env("CACHE_LOCATION"),  # Address of the Memcached server
+        }
+    }
