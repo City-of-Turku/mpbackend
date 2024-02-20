@@ -4,7 +4,9 @@ import uuid
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
+from django.utils.decorators import method_decorator
 from django.utils.module_loading import import_string
+from django.views.decorators.cache import cache_page
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import (
     extend_schema,
@@ -62,6 +64,7 @@ DEFAULT_RENDERERS = [
     import_string(renderer_module)
     for renderer_module in settings.REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"]
 ]
+MINUTES_TO_CACHE_VIEW = 15
 all_views = []
 
 
@@ -160,6 +163,10 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
     renderer_classes = DEFAULT_RENDERERS
+
+    @method_decorator(cache_page(60 * MINUTES_TO_CACHE_VIEW))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     @extend_schema(
         description="Start the Poll for a anonymous user. Creates a anonymous user and logs the user in."
@@ -452,6 +459,10 @@ class QuestionConditionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = QuestionCondition.objects.all()
     serializer_class = QuestionConditionSerializer
 
+    @method_decorator(cache_page(60 * MINUTES_TO_CACHE_VIEW))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
 
 register_view(QuestionConditionViewSet, "questioncondition")
 
@@ -459,6 +470,10 @@ register_view(QuestionConditionViewSet, "questioncondition")
 class SubQuestionConditionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SubQuestionCondition.objects.all()
     serializer_class = SubQuestionConditionSerializer
+
+    @method_decorator(cache_page(60 * MINUTES_TO_CACHE_VIEW))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 register_view(SubQuestionConditionViewSet, "subquestioncondition")
@@ -468,6 +483,10 @@ class OptionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Option.objects.all()
     serializer_class = OptionSerializer
 
+    @method_decorator(cache_page(60 * MINUTES_TO_CACHE_VIEW))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
 
 register_view(OptionViewSet, "option")
 
@@ -476,6 +495,10 @@ class SubQuestionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = SubQuestion.objects.all()
     serializer_class = SubQuestionSerializer
 
+    @method_decorator(cache_page(60 * MINUTES_TO_CACHE_VIEW))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
 
 register_view(SubQuestionViewSet, "subquestion")
 
@@ -483,6 +506,10 @@ register_view(SubQuestionViewSet, "subquestion")
 class ResultViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Result.objects.all()
     serializer_class = ResultSerializer
+
+    @method_decorator(cache_page(60 * MINUTES_TO_CACHE_VIEW))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 register_view(ResultViewSet, "result")
