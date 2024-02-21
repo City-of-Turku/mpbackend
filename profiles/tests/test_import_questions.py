@@ -118,8 +118,14 @@ def test_import_questions():
         assert Question.objects.filter(number=number).count() == 0
     # Test other options
     other_options_qs = Option.objects.filter(is_other=True)
-    assert other_options_qs.count() == 13
-    assert other_options_qs.first().question == Question.objects.get(number="1a")
+    assert other_options_qs.count() == 15
+    # Test has matched "//Other"
+    other_options_qs.filter(question=Question.objects.get(number="1a")).exists()
+    # Test has matched "//Something else"
+    other_options_qs.filter(question=Question.objects.get(number="1b1")).exists()
+    # Test has matched "//Not applicable"
+    other_options_qs.filter(question=Question.objects.get(number="6")).exists()
+
     # Test that rows are preserved and duplicates are not generated
     import_command()
     assert Result.objects.count() == 6
