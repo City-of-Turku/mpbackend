@@ -120,11 +120,20 @@ def test_import_questions():
     other_options_qs = Option.objects.filter(is_other=True)
     assert other_options_qs.count() == 15
     # Test has matched "//Other"
-    other_options_qs.filter(question=Question.objects.get(number="1a")).exists()
+    assert (
+        other_options_qs.filter(question=Question.objects.get(number="1a")).exists()
+        is True
+    )
     # Test has matched "//Something else"
-    other_options_qs.filter(question=Question.objects.get(number="1b1")).exists()
+    assert (
+        other_options_qs.filter(question=Question.objects.get(number="1b1")).exists()
+        is True
+    )
     # Test has matched "//Not applicable"
-    other_options_qs.filter(question=Question.objects.get(number="6")).exists()
+    assert (
+        other_options_qs.filter(question=Question.objects.get(number="6")).exists()
+        is True
+    )
 
     # Test that rows are preserved and duplicates are not generated
     import_command()
