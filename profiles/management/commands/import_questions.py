@@ -32,7 +32,7 @@ SUB_QUESTION_DESCRIPTION_COLUMN = 7
 SUB_QUESTION_CONDITION_COLUMN = 8
 OPTION_COLUMN = 9
 RESULT_COLUMNS = [10, 11, 12, 13, 14, 15]
-OTHER_STRING_CONTAINS = ["/Other", "Something else"]
+OTHER_STRING_CONTAINS = ["//Other", "//Something else", "//Not applicable"]
 SKIP_QUESTIONS = ["11", "12", "13", "14", "15", "17", "18", "19", "20"]
 
 
@@ -274,7 +274,11 @@ def save_questions(excel_data: pd.DataFrame, results: list):
                 )
             if is_any_substring_in_string(OTHER_STRING_CONTAINS, str(val_str)):
                 option.is_other = True
-                option.save()
+
+            else:
+                option.is_other = False
+            option.save()
+
             option_order_number += 1
             save_translated_field(option, "value", get_language_dict(val_str))
             for a_i, a_c in enumerate(RESULT_COLUMNS):
