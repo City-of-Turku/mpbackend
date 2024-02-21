@@ -2,6 +2,7 @@ import time
 
 import pytest
 from django.conf import settings
+from django.core.cache import cache
 from rest_framework.authtoken.models import Token
 from rest_framework.reverse import reverse
 
@@ -295,6 +296,7 @@ def test_questions_user_throttling(api_client_with_custom_ip_address, users):
 
 @pytest.mark.django_db
 def test_question_list(api_client, questions):
+    cache.clear()
     url = reverse("profiles:question-list")
     response = api_client.get(url)
     assert response.status_code == 200
