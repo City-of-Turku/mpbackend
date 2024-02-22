@@ -24,6 +24,7 @@ django==4.2
     #   django-cors-headers
     #   django-extensions
     #   django-filter
+    #   django-memoize
     #   django-modeltranslation
     #   djangorestframework
     #   drf-spectacular
@@ -34,6 +35,8 @@ django-environ==0.10.0
 django-extensions==3.2.1
     # via -r requirements.in
 django-filter==23.5
+    # via -r requirements.in
+django-memoize==2.3.1
     # via -r requirements.in
 django-modeltranslation==0.18.9
     # via -r requirements.in
