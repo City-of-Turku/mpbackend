@@ -1,11 +1,13 @@
 import secrets
 import string
 
-from account.models import User
-from profiles.models import Answer, Option, Result
 from memoize import memoize
 
-@memoize(timeout=60*60)
+from account.models import User
+from profiles.models import Answer, Option, Result
+
+
+@memoize(timeout=60 * 60)
 def get_num_results_per_option() -> dict:
     results = {}
     for result in Result.objects.all():
