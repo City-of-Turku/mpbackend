@@ -3,8 +3,9 @@ import string
 
 from account.models import User
 from profiles.models import Answer, Option, Result
+from memoize import memoize
 
-
+@memoize(timeout=60*60)
 def get_num_results_per_option() -> dict:
     results = {}
     for result in Result.objects.all():
@@ -29,6 +30,7 @@ def get_user_result(user: User) -> Result:
         return None
     # calculate the relative result for every result (animal)
     results = {}
+
     for result in Result.objects.all():
         results[result] = cum_results[result] / num_results_in_option[result]
 
