@@ -10,9 +10,11 @@ from profiles.models import (
     PostalCodeType,
     SubQuestion,
 )
+from profiles.tests.utils import delete_memoized_functions_cache
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_postal_code_result(api_client, questions, sub_questions, options, results):
     num_users = 21
     num_answers = 0

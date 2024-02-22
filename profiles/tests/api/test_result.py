@@ -2,6 +2,7 @@ import pytest
 from rest_framework.reverse import reverse
 
 from profiles.tests.conftest import NEG, OK, POS, YES_BIKE
+from profiles.tests.utils import delete_memoized_functions_cache
 
 ANSWER_URL = reverse("profiles:answer-list")
 RESULT_URL = reverse("profiles:answer-get-result")
@@ -14,6 +15,7 @@ def test_result_no_answers(api_client_auth_no_answers):
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_relative_result(
     api_client_auth_no_answers,
     questions_test_result,
@@ -38,6 +40,7 @@ def test_relative_result(
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_neg_result(
     api_client_auth_no_answers,
     questions_test_result,
@@ -66,6 +69,7 @@ def test_neg_result(
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_ok_result(
     api_client_auth_no_answers,
     questions_test_result,
@@ -96,6 +100,7 @@ def test_ok_result(
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_pos_result(
     api_client_auth_no_answers,
     questions_test_result,
@@ -112,6 +117,7 @@ def test_pos_result(
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_options_with_multiple_results(
     api_client_auth_no_answers,
     questions_test_result,

@@ -7,9 +7,9 @@ from rest_framework.authtoken.models import Token
 from rest_framework.reverse import reverse
 
 from profiles.models import Answer, PostalCodeResult
+from profiles.tests.utils import delete_memoized_functions_cache
 
 
-@pytest.mark.django_db
 @pytest.mark.django_db
 def test_sub_questions_conditions_states(
     api_client,
@@ -44,6 +44,7 @@ def test_questions_condition_states_not_authenticated(
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_questions_condition_states_after_post_answer(
     api_client, users, questions, question_conditions, options
 ):
@@ -76,6 +77,7 @@ def test_questions_condition_states_after_post_answer(
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_questions_condition_states(
     api_client, users, answers, questions, question_conditions
 ):
@@ -117,6 +119,7 @@ def test_questions_condition_states(
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_get_questions_with_conditions(
     api_client, users, answers, questions, question_conditions
 ):
@@ -129,6 +132,7 @@ def test_get_questions_with_conditions(
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_question_condition_is_met(
     api_client, users, answers, questions, question_conditions
 ):
@@ -144,6 +148,7 @@ def test_question_condition_is_met(
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_question_condition_not_met(
     api_client, users, answers, questions, question_conditions
 ):
@@ -181,6 +186,7 @@ def test_question_with_sub_question_condition_is_met(
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_question_with_sub_question_condition_not_met(
     api_client,
     users,
@@ -362,9 +368,7 @@ def test_result_count_is_filled_for_fun_is_false(
 
 
 @pytest.mark.django_db
-def test_result_count_is_filled_for_fun_is_true(
-    api_client_authenticated, answers, users
-):
+def test_result_count_is_filled_for_fun_is_true(api_client_authenticated, users):
     user = users.get(username="test1")
     url = reverse("profiles:question-end-poll")
     user.profile.is_filled_for_fun = True
@@ -375,8 +379,9 @@ def test_result_count_is_filled_for_fun_is_true(
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_result_count_result_can_be_used_is_true(
-    api_client_authenticated, answers, users
+    api_client_authenticated, users, answers
 ):
     user = users.get(username="test1")
     assert user.profile.result_can_be_used is True
@@ -387,8 +392,9 @@ def test_result_count_result_can_be_used_is_true(
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_result_count_result_can_be_used_is_false(
-    api_client_authenticated, answers, users
+    api_client_authenticated, users, answers
 ):
     user = users.get(username="test1")
     user.profile.result_can_be_used = False
@@ -400,6 +406,7 @@ def test_result_count_result_can_be_used_is_false(
 
 
 @pytest.mark.django_db
+@delete_memoized_functions_cache
 def test_sub_question_condition(
     api_client_authenticated, questions, sub_question_conditions, options, sub_questions
 ):
