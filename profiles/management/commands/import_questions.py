@@ -93,12 +93,15 @@ def get_and_create_results(data: pd.DataFrame) -> list:
         col_data = data[column]
         topic = get_language_dict(data.columns[RESULT_COLUMNS[0] + i])
         description = get_language_dict(col_data[0])
+        value = get_language_dict(col_data[1])
         filter = {"topic": topic["fi"]}
         update_filter = {}
 
         for lang in LANGUAGES:
             update_filter[f"topic_{lang}"] = topic[lang]
             update_filter[f"description_{lang}"] = description[lang]
+            update_filter[f"value_{lang}"] = value[lang]
+
         queryset = Result.objects.filter(**filter)
         if queryset.count() == 0:
             result = Result.objects.create(**filter)
