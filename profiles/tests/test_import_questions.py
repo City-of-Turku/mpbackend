@@ -34,11 +34,14 @@ def test_import_questions():
     assert results_qs.count() == 6
     autoilija = Result.objects.get(topic_fi="Autoilija")
     assert results_qs[0].topic_fi == autoilija.topic_fi
+    assert "Enkel" in results_qs[0].value_sv
     assert "You know where" in results_qs[1].description_en
     assert "Fotgängare" in results_qs[2].topic_sv
     assert results_qs[3].topic_en == "Public transport passenger"
     assert "Maas" in results_qs[4].topic_fi
-
+    assert "Kauris" in results_qs[4].value_fi
+    assert "Hjort" in results_qs[4].value_sv
+    assert "Deer" in results_qs[4].value_en
     # Test questions
     assert Question.objects.count() == 17
     # Test question without sub questions
