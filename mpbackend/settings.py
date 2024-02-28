@@ -28,6 +28,8 @@ env = environ.Env(
     STATIC_URL=(str, "/static/"),
     CORS_ORIGIN_WHITELIST=(list, []),
     CACHE_LOCATION=(str, "127.0.0.1:11211"),
+    GOOGLE_RECAPTCHA_SECRET_KEY=(str, None),
+    GOOGLE_RECAPTCHA_VERIFY_URL=(str, None),
 )
 # WARN about env file not being preset. Here we pre-empt it.
 env_file_path = os.path.join(BASE_DIR, CONFIG_FILE_NAME)
@@ -263,3 +265,6 @@ if "pytest" not in sys.modules:
             "LOCATION": env("CACHE_LOCATION"),  # Address of the Memcached server
         }
     }
+
+GOOGLE_RECAPTCHA_SECRET_KEY = env("GOOGLE_RECAPTCHA_SECRET_KEY")
+GOOGLE_RECAPTCHA_VERIFY_URL = env("GOOGLE_RECAPTCHA_VERIFY_URL")
