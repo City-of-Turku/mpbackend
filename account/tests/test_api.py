@@ -1,5 +1,6 @@
 import time
 from datetime import timedelta
+from unittest.mock import patch as mock_patch
 
 import pytest
 from django.conf import settings
@@ -31,7 +32,6 @@ def test_token_expiration(api_client_authenticated, users, profiles):
 
 @pytest.mark.django_db
 def test_unauthenticated_cannot_do_anything(api_client, users):
-    # TODO, add start-poll url after recaptcha integration
     urls = [
         reverse("account:profiles-detail", args=[users.get(username="test1").id]),
     ]
@@ -65,9 +65,11 @@ def test_mailing_list_unsubscribe_throttling(
 
 
 @pytest.mark.django_db
-def test_profile_created(api_client):
+@mock_patch("profiles.api.views.verify_recaptcha")
+def test_profile_created(verify_recaptcha_mock, api_client):
+    verify_recaptcha_mock.return_value = True
     url = reverse("profiles:question-start-poll")
-    response = api_client.post(url)
+    response = api_client.post(url, {"token": "foo"})
     assert response.status_code == 200
     assert User.objects.all().count() == 1
     user = User.objects.first()
