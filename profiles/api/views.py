@@ -1,5 +1,6 @@
 import logging
 import uuid
+
 import requests
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
@@ -92,9 +93,8 @@ def sub_question_condition_met(sub_question_condition, user):
     return False
 
 
-    
 def verify_recaptcha(token):
-    data={"secret": settings.GOOGLE_RECAPTCHA_SECRET_KEY, "response":token}
+    data = {"secret": settings.GOOGLE_RECAPTCHA_SECRET_KEY, "response": token}
     response = requests.post(settings.GOOGLE_RECAPTCHA_VERIFY_URL, data=data)
     return response.json().get("success", None)
 
@@ -193,7 +193,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
             token = request.data["token"]
         except KeyError:
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        
+
         if not verify_recaptcha(token):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
