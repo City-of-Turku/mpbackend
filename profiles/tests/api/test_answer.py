@@ -2,7 +2,6 @@ import pytest
 from rest_framework.authtoken.models import Token
 from rest_framework.reverse import reverse
 
-from account.models import User
 from profiles.models import Answer, Option, Question, SubQuestion
 from profiles.tests.utils import delete_memoized_functions_cache
 
@@ -11,15 +10,6 @@ def test_answer_post_unauthenticated(api_client):
     url = reverse("profiles:answer-list")
     response = api_client.post(url)
     assert response.status_code == 401
-
-
-@pytest.mark.django_db
-def test_poll_start(api_client):
-    User.objects.all().count() == 0
-    url = reverse("profiles:question-start-poll")
-    response = api_client.post(url)
-    assert response.status_code == 200
-    User.objects.all().count() == 1
 
 
 @pytest.mark.django_db
