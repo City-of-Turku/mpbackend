@@ -59,12 +59,13 @@ class Option(models.Model):
 class Result(models.Model):
     topic = models.CharField(max_length=64, null=True)
     description = models.TextField(null=True)
+    value = models.CharField(max_length=64, null=True)
 
     class Meta:
         ordering = ["id"]
 
     def __str__(self):
-        return f"{self.topic}"
+        return f"{self.topic} / {self.value}"
 
 
 class Answer(models.Model):
