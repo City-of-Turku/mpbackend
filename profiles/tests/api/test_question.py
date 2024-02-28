@@ -1,4 +1,5 @@
 import time
+from unittest.mock import patch
 
 import pytest
 from django.conf import settings
@@ -6,8 +7,38 @@ from django.core.cache import cache
 from rest_framework.authtoken.models import Token
 from rest_framework.reverse import reverse
 
+from account.models import User
 from profiles.models import Answer, PostalCodeResult
 from profiles.tests.utils import delete_memoized_functions_cache
+
+
+@pytest.mark.django_db
+def test_poll_start(api_client):
+    with patch("profiles.api.views.verify_recaptcha") as mock_verify_recaptcha:
+        mock_verify_recaptcha.return_value = True
+        User.objects.all().count() == 0
+        url = reverse("profiles:question-start-poll")
+        response = api_client.post(url, {"token": "token"})
+        assert response.status_code == 200
+        User.objects.all().count() == 1
+
+
+@pytest.mark.django_db
+def test_poll_start_missing_token(api_client):
+    User.objects.all().count() == 0
+    url = reverse("profiles:question-start-poll")
+    response = api_client.post(url)
+    assert response.status_code == 400
+    User.objects.all().count() == 0
+
+
+@pytest.mark.django_db
+def test_poll_start_not_valid_token(api_client):
+    User.objects.all().count() == 0
+    url = reverse("profiles:question-start-poll")
+    response = api_client.post(url, {"token": "not valid"})
+    assert response.status_code == 403
+    User.objects.all().count() == 0
 
 
 @pytest.mark.django_db
