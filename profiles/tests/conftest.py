@@ -6,6 +6,8 @@ from account.models import Profile, User
 from profiles.models import (
     Answer,
     Option,
+    PostalCode,
+    PostalCodeType,
     Question,
     QuestionCondition,
     Result,
@@ -45,6 +47,22 @@ def api_client_auth_no_answers(users):
 @pytest.fixture()
 def api_client_with_custom_ip_address(ip_address):
     return APIClient(REMOTE_ADDR=ip_address)
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def postal_codes():
+    PostalCode.objects.create(postal_code="20210")
+    PostalCode.objects.create(postal_code="20220")
+    return PostalCode.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def postal_code_types():
+    PostalCodeType.objects.create(type_name=PostalCodeType.HOME_POSTAL_CODE)
+    PostalCodeType.objects.create(type_name=PostalCodeType.OPTIONAL_POSTAL_CODE)
+    return PostalCodeType.objects.all()
 
 
 @pytest.mark.django_db
