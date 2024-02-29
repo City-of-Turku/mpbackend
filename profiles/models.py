@@ -101,6 +101,9 @@ class AnswerOther(Answer):
 
 
 class QuestionCondition(models.Model):
+    class Meta:
+        ordering = ["id"]
+
     question = models.ForeignKey(
         "Question",
         related_name="question_conditions",
@@ -126,6 +129,9 @@ class QuestionCondition(models.Model):
 
 
 class SubQuestionCondition(models.Model):
+    class Meta:
+        ordering = ["id"]
+
     sub_question = models.ForeignKey(
         "SubQuestion",
         related_name="sub_question_conditions",
