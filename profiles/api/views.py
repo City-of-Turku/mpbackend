@@ -620,7 +620,7 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
                     )
                 filter["other"] = other
             queryset = Answer.objects.filter(**filter)
-            if not queryset.exists == 0:
+            if not queryset.exists():
                 filter["option"] = option
                 Answer.objects.create(**filter)
             else:
