@@ -70,7 +70,7 @@ class Result(models.Model):
 
 class Answer(models.Model):
     user = models.ForeignKey(
-        "account.User", related_name="answers", on_delete=models.CASCADE
+        "account.User", related_name="answers", on_delete=models.CASCADE, db_index=True
     )
     option = models.ForeignKey(
         "Option", related_name="answers", null=True, on_delete=models.CASCADE
@@ -81,13 +81,17 @@ class Answer(models.Model):
         "Question", related_name="answers", null=True, on_delete=models.CASCADE
     )
     sub_question = models.ForeignKey(
-        "SubQuestion", related_name="answers", null=True, on_delete=models.CASCADE
+        "SubQuestion",
+        related_name="answers",
+        null=True,
+        on_delete=models.CASCADE,
     )
 
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["id"]
+        indexes = [models.Index(fields=["user", "question", "sub_question"])]
 
 
 class AnswerOther(Answer):
@@ -181,6 +185,7 @@ class PostalCodeResult(models.Model):
     count = models.PositiveIntegerField(default=0)
 
     class Meta:
+        ordering = ["postal_code", "postal_code_type"]
         constraints = [
             models.CheckConstraint(
                 check=models.Q(
