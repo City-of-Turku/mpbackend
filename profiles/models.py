@@ -147,6 +147,9 @@ class SubQuestionCondition(models.Model):
 
 
 class PostalCode(models.Model):
+    class Meta:
+        ordering = ["id"]
+
     postal_code = models.CharField(max_length=10, null=True)
 
     def __str__(self):
@@ -154,6 +157,9 @@ class PostalCode(models.Model):
 
 
 class PostalCodeType(models.Model):
+    class Meta:
+        ordering = ["id"]
+
     HOME_POSTAL_CODE = "Home"
     OPTIONAL_POSTAL_CODE = "Optional"
     POSTAL_CODE_TYPE_CHOICES = [
