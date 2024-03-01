@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib import admin
 
-from .models import MailingList, Profile, User
 from profiles.admin import DisableAddAdminMixin, DisableDeleteAdminMixin
+
+from .models import MailingList, Profile, User
 
 admin.site.register(User)
 
