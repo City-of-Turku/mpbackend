@@ -1,4 +1,7 @@
+import csv
+
 from django.contrib import admin
+from django.http import HttpResponse
 
 from profiles.models import (
     Answer,
@@ -74,11 +77,40 @@ class AnswerAdmin(DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.Model
 class AnswerOtherAdmin(
     DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
 ):
+    queryset = Answer.objects.filter(other__isnull=False)
+    actions = ["export_as_csv"]
+    list_per_page = queryset.count()
     list_display = (
         "question_description",
         "sub_question_description",
         "other",
     )
+
+    def export_as_csv(self, request, queryset):
+        meta = self.model._meta
+        queryset = queryset.order_by("question", "sub_question")
+        field_names = ["id", "created", "question", "sub_question", "option", "other"]
+        str_fields = ["question", "sub_question", "other"]
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename={}.csv".format(meta)
+        writer = csv.writer(response)
+        writer.writerow(field_names)
+        for obj in queryset:
+            row = []
+            for field in field_names:
+                attr = getattr(obj, field)
+                if field == "question" and attr is None:
+                    attr = obj.sub_question.question
+                if field in str_fields:
+                    attr = (
+                        str(attr).replace('"', "'").replace("\n", " ").replace("\r", "")
+                    )
+                row.append(attr)
+            writer.writerow(row)
+
+        return response
+
+    export_as_csv.short_description = "Export selected as CSV"
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
