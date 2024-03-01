@@ -2,6 +2,7 @@ from django import forms
 from django.contrib import admin
 
 from .models import MailingList, Profile, User
+from profiles.admin import DisableAddAdminMixin, DisableDeleteAdminMixin
 
 admin.site.register(User)
 
@@ -24,7 +25,7 @@ class MailingListAdminForm(forms.ModelForm):
         fields = ["result"]
 
 
-class MailingListAdmin(admin.ModelAdmin):
+class MailingListAdmin(DisableDeleteAdminMixin, DisableAddAdminMixin, admin.ModelAdmin):
     list_display = ("result", "csv_emails")
 
     readonly_fields = ("result",)
