@@ -18,7 +18,12 @@ from profiles.models import (
 )
 
 
-class ReadOnlyFieldsAdminMixin:
+class DisableAddAdminMixin:
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+class DisableChangeAdminMixin:
     def has_change_permission(self, request, obj=None):
         return False
 
@@ -28,42 +33,63 @@ class DisableDeleteAdminMixin:
         return False
 
 
-class QuestionAdmin(DisableDeleteAdminMixin, admin.ModelAdmin):
+class QuestionAdmin(DisableDeleteAdminMixin, DisableAddAdminMixin, admin.ModelAdmin):
     class Meta:
         model = Question
 
 
 class QuestionConditionAdmin(
-    DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
 ):
     class Meta:
         model = QuestionCondition
 
 
-class SubQuestionAdmin(DisableDeleteAdminMixin, admin.ModelAdmin):
+class SubQuestionAdmin(DisableDeleteAdminMixin, DisableAddAdminMixin, admin.ModelAdmin):
     class Meta:
         model = Question
 
 
-class ResultAdmin(DisableDeleteAdminMixin, admin.ModelAdmin):
+class ResultAdmin(
+    DisableDeleteAdminMixin,
+    DisableAddAdminMixin,
+    DisableChangeAdminMixin,
+    admin.ModelAdmin,
+):
     class Meta:
         model = Result
 
 
 class SubQuestionConditionAdmin(
-    DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
 ):
     class Meta:
         model = SubQuestionCondition
 
 
-class OptionAdmin(DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin):
+class OptionAdmin(
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
+):
     class Meta:
         model = Option
 
 
 @admin.register(Answer)
-class AnswerAdmin(DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin):
+class AnswerAdmin(
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
+):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         qs = qs.filter(option__is_other=False)
@@ -75,7 +101,10 @@ class AnswerAdmin(DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.Model
 
 @admin.register(AnswerOther)
 class AnswerOtherAdmin(
-    DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
 ):
     queryset = Answer.objects.filter(other__isnull=False)
     actions = ["export_as_csv"]
@@ -136,21 +165,30 @@ class AnswerOtherAdmin(
 
 
 class PostalCodeAdmin(
-    DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
 ):
     class Meta:
         model = PostalCode
 
 
 class PostalCodeTypeAdmin(
-    DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
 ):
     class Meta:
         model = PostalCodeType
 
 
 class PostalCodeResultAdmin(
-    DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
 ):
     list_display = ("postal_code", "postal_code_type", "result", "count")
 
