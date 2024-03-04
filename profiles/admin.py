@@ -108,7 +108,7 @@ class AnswerOtherAdmin(
 ):
     queryset = Answer.objects.filter(other__isnull=False)
     actions = ["export_as_csv"]
-    list_per_page = queryset.count()
+    list_per_page = 10000
     list_display = (
         "question_description",
         "sub_question_description",
