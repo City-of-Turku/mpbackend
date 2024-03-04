@@ -84,9 +84,9 @@ def get_or_create_row(model, filter):
 
 
 def sub_question_condition_met(sub_question_condition, user):
-    if Answer.objects.filter(user=user, option=sub_question_condition.option).exists():
-        return True
-    return False
+    return Answer.objects.filter(
+        user=user, option=sub_question_condition.option
+    ).exists()
 
 
 def question_condition_met(question_condition_qs, user):
