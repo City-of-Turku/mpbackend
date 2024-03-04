@@ -84,12 +84,9 @@ def get_or_create_row(model, filter):
 
 
 def sub_question_condition_met(sub_question_condition, user):
-    if (
-        Answer.objects.filter(user=user, option=sub_question_condition.option).count()
-        > 0
-    ):
-        return True
-    return False
+    return Answer.objects.filter(
+        user=user, option=sub_question_condition.option
+    ).exists()
 
 
 def question_condition_met(question_condition_qs, user):
@@ -116,7 +113,6 @@ def question_condition_met(question_condition_qs, user):
 def update_postal_code_result(user):
     # Ensure that duplicate results are not saved, profiles filled for fun and profiles whos result
     # can not be used are ignored.
-
     if (
         user.postal_code_result_saved
         or user.profile.is_filled_for_fun
@@ -357,7 +353,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
                 )
         # Retrive the conditions for the question, note can have multiple conditions
         question_condition_qs = QuestionCondition.objects.filter(question=question)
-        if question_condition_qs.count() == 0:
+        if not question_condition_qs.exists():
             return Response(
                 f"QuestionCondition not found for question number {question_id}",
                 status=status.HTTP_404_NOT_FOUND,
@@ -443,7 +439,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
                 )
 
         qs = QuestionCondition.objects.filter(question_condition=question)
-        if qs.count() > 0:
+        if qs.exists():
             response_data["in_condition"] = True
         serializer = InConditionResponseSerializer(data=response_data)
         if serializer.is_valid():
@@ -597,7 +593,7 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
                     status=status.HTTP_404_NOT_FOUND,
                 )
         question_condition_qs = QuestionCondition.objects.filter(question=question)
-        if question_condition_qs.count() > 0:
+        if question_condition_qs.exists():
             if not question_condition_met(question_condition_qs, user):
                 return Response(
                     "Question condition not met, i.e. the user has answered so that this question cannot be answered",
@@ -624,7 +620,7 @@ class AnswerViewSet(CreateModelMixin, GenericViewSet):
                     )
                 filter["other"] = other
             queryset = Answer.objects.filter(**filter)
-            if queryset.count() == 0:
+            if not queryset.exists():
                 filter["option"] = option
                 Answer.objects.create(**filter)
             else:

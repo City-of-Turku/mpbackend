@@ -15,13 +15,8 @@ root = environ.Path(__file__) - 2  # two levels back in hierarchy
 env = environ.Env(
     DEBUG=(bool, False),
     LANGUAGES=(list, ["fi", "sv", "en"]),
-    DATABASE_URL=(str, "postgis:///servicemap"),
+    DATABASE_URL=(str, "postgres://mobilityprofile:mobilityprofile"),
     ALLOWED_HOSTS=(list, []),
-    EMAIL_BACKEND=(str, None),
-    EMAIL_HOST=(str, None),
-    EMAIL_HOST_USER=(str, None),
-    EMAIL_PORT=(int, None),
-    EMAIL_USE_TLS=(bool, None),
     MEDIA_ROOT=(environ.Path(), root("media")),
     STATIC_ROOT=(environ.Path(), root("static")),
     MEDIA_URL=(str, "/media/"),
@@ -38,7 +33,6 @@ if os.path.exists(env_file_path):
 
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
-
 
 # Custom user model
 AUTH_USER_MODEL = "account.User"
@@ -72,7 +66,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # "mpbackend.middleware.TimingMiddleware",
 ]
 
 ROOT_URLCONF = "mpbackend.urls"
@@ -238,12 +231,6 @@ LOGGING = {
         },
     },
 }
-
-EMAIL_BACKEND = env("EMAIL_BACKEND")
-EMAIL_HOST = env("EMAIL_HOST")
-EMAIL_HOST_USER = env("EMAIL_HOST_USER")
-EMAIL_PORT = env("EMAIL_PORT")
-EMAIL_USE_TLS = env("EMAIL_USE_TLS")
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "Mobility Profile API",
