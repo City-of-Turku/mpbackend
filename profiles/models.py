@@ -70,7 +70,7 @@ class Result(models.Model):
 
 class Answer(models.Model):
     user = models.ForeignKey(
-        "account.User", related_name="answers", on_delete=models.CASCADE
+        "account.User", related_name="answers", on_delete=models.CASCADE, db_index=True
     )
     option = models.ForeignKey(
         "Option", related_name="answers", null=True, on_delete=models.CASCADE
@@ -81,13 +81,17 @@ class Answer(models.Model):
         "Question", related_name="answers", null=True, on_delete=models.CASCADE
     )
     sub_question = models.ForeignKey(
-        "SubQuestion", related_name="answers", null=True, on_delete=models.CASCADE
+        "SubQuestion",
+        related_name="answers",
+        null=True,
+        on_delete=models.CASCADE,
     )
 
     created = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ["id"]
+        indexes = [models.Index(fields=["user", "question", "sub_question"])]
 
 
 class AnswerOther(Answer):
@@ -97,6 +101,9 @@ class AnswerOther(Answer):
 
 
 class QuestionCondition(models.Model):
+    class Meta:
+        ordering = ["id"]
+
     question = models.ForeignKey(
         "Question",
         related_name="question_conditions",
@@ -122,6 +129,9 @@ class QuestionCondition(models.Model):
 
 
 class SubQuestionCondition(models.Model):
+    class Meta:
+        ordering = ["id"]
+
     sub_question = models.ForeignKey(
         "SubQuestion",
         related_name="sub_question_conditions",
@@ -137,6 +147,9 @@ class SubQuestionCondition(models.Model):
 
 
 class PostalCode(models.Model):
+    class Meta:
+        ordering = ["id"]
+
     postal_code = models.CharField(max_length=10, null=True)
 
     def __str__(self):
@@ -144,6 +157,9 @@ class PostalCode(models.Model):
 
 
 class PostalCodeType(models.Model):
+    class Meta:
+        ordering = ["id"]
+
     HOME_POSTAL_CODE = "Home"
     OPTIONAL_POSTAL_CODE = "Optional"
     POSTAL_CODE_TYPE_CHOICES = [
@@ -181,6 +197,7 @@ class PostalCodeResult(models.Model):
     count = models.PositiveIntegerField(default=0)
 
     class Meta:
+        ordering = ["postal_code", "postal_code_type"]
         constraints = [
             models.CheckConstraint(
                 check=models.Q(
