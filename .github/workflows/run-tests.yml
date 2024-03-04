@@ -12,13 +12,13 @@ jobs:
 
     env:
       # Database for tests
-      DATABASE_URL: postgis://postgres:postgres@localhost/smbackend
+      DATABASE_URL: postgres://postgres:postgres@localhost/mobilityprofile
      
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: 3.10.4
     - name: Install required Ubuntu packages
@@ -42,7 +42,7 @@ jobs:
         pip install coverage
         coverage report -m
     - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v3 
+      uses: codecov/codecov-action@v4 
     # Majority of the tests require database
     services:
       # Label used to access the service container
