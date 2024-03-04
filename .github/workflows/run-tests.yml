@@ -12,9 +12,8 @@ jobs:
 
     env:
       # Database for tests
-      DATABASE_URL: postgis://postgres:postgres@localhost/smbackend
-      GOOGLE_RECAPTCHA_SECRET_KEY: testSecret
-      GOOGLE_RECAPTCHA_VERIFY_URL: https://www.google.com/recaptcha/api/siteverify     
+      DATABASE_URL: postgres://postgres:postgres@localhost/mobilityprofile
+     
 
     steps:
     - uses: actions/checkout@v4
