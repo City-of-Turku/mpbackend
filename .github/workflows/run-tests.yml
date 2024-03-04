@@ -12,10 +12,10 @@ jobs:
 
     env:
       # Database for tests
-      DATABASE_URL: postgis://postgres:postgres@localhost/smbackend
+      DATABASE_URL: postgres://postgres:postgres@localhost/mobilityprofile
       GOOGLE_RECAPTCHA_SECRET_KEY: testSecret
-      GOOGLE_RECAPTCHA_VERIFY_URL: https://www.google.com/recaptcha/api/siteverify     
-
+      GOOGLE_RECAPTCHA_VERIFY_URL: https://www.google.com/recaptcha/api/siteverif     
+     
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python

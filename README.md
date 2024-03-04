@@ -37,9 +37,8 @@ Local setup:
 
 ```
 sudo su postgres
-psql template1 -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
 createuser -RSPd mobilityprofile
-createdb -O mobilityprofile -T template1 -l fi_FI.UTF-8 -E utf8 mobilityprofile
+createdb -O mobilityprofile -l fi_FI.UTF-8 -E utf8 mobilityprofile
 ```
 
 5. Create database tables.
