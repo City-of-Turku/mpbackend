@@ -14,7 +14,7 @@ jobs:
       # Database for tests
       DATABASE_URL: postgres://postgres:postgres@localhost/mobilityprofile
       GOOGLE_RECAPTCHA_SECRET_KEY: testSecret
-      GOOGLE_RECAPTCHA_VERIFY_URL: https://www.google.com/recaptcha/api/siteverif     
+      GOOGLE_RECAPTCHA_VERIFY_URL: https://www.google.com/recaptcha/api/siteverify     
      
     steps:
     - uses: actions/checkout@v4
