@@ -102,7 +102,9 @@ def options_test_result(questions_test_result, results_test_result):
             """
             if q_c <= v_c:
                 option.results.add(result)
-
+    for result in results_test_result:
+        result.num_options = Option.objects.filter(results=result).count()
+        result.save()
     return Option.objects.all()
 
 
@@ -115,6 +117,9 @@ def options_with_multiple_results(questions_test_result, results_test_result):
     option = Option.objects.create(question=q3, value=YES_BIKE)
     option.results.add(pos_res)
     option.results.add(ok_res)
+    for result in results_test_result:
+        result.num_options = Option.objects.filter(results=result).count()
+        result.save()
     return Option.objects.all()
 
 
@@ -178,8 +183,12 @@ def options(questions, sub_questions, results):
 @pytest.mark.django_db
 @pytest.fixture
 def results():
-    Result.objects.create(topic="negative", description="negative result")
-    Result.objects.create(topic="positive", description="positive result")
+    Result.objects.create(
+        topic="negative", description="negative result", num_options=1
+    )
+    Result.objects.create(
+        topic="positive", description="positive result", num_options=1
+    )
     return Result.objects.all()
 
 
