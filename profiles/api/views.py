@@ -127,21 +127,28 @@ def update_postal_code_result(user):
         return
     postal_code = None
     postal_code_type = None
-    if user.profile.postal_code:
-        postal_code, _ = PostalCode.objects.get_or_create(
-            postal_code=user.profile.postal_code
+    postal_code, _ = PostalCode.objects.get_or_create(
+        postal_code=user.profile.postal_code
+    )
+    postal_code_type, _ = PostalCodeType.objects.get_or_create(
+        type_name=PostalCodeType.HOME_POSTAL_CODE
+    )
+    try:
+        postal_code_result, _ = PostalCodeResult.objects.get_or_create(
+            postal_code=postal_code, postal_code_type=postal_code_type, result=result
         )
-        postal_code_type, _ = PostalCodeType.objects.get_or_create(
-            type_name=PostalCodeType.HOME_POSTAL_CODE
-        )
-    if user.profile.optional_postal_code:
-        postal_code, _ = PostalCode.objects.get_or_create(
-            postal_code=user.profile.optional_postal_code
-        )
-        postal_code_type, _ = PostalCodeType.objects.get_or_create(
-            type_name=PostalCodeType.OPTIONAL_POSTAL_CODE
-        )
+    except IntegrityError as e:
+        logger.error(f"IntegrityError while creating PostalCodeResult: {e}")
+        return
+    postal_code_result.count += 1
+    postal_code_result.save()
 
+    postal_code, _ = PostalCode.objects.get_or_create(
+        postal_code=user.profile.optional_postal_code
+    )
+    postal_code_type, _ = PostalCodeType.objects.get_or_create(
+        type_name=PostalCodeType.OPTIONAL_POSTAL_CODE
+    )
     try:
         postal_code_result, _ = PostalCodeResult.objects.get_or_create(
             postal_code=postal_code, postal_code_type=postal_code_type, result=result
