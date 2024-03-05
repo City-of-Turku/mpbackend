@@ -106,14 +106,21 @@ class AnswerOtherAdmin(
     DisableAddAdminMixin,
     admin.ModelAdmin,
 ):
-    queryset = Answer.objects.filter(other__isnull=False)
+    ordering = ["question", "sub_question"]
+
     actions = ["export_as_csv"]
     list_per_page = 10000
     list_display = (
+        "question_number",
         "question_description",
         "sub_question_description",
         "other",
     )
+
+    def question_number(self, obj):
+        if obj.sub_question:
+            return obj.sub_question.question.number
+        return obj.question.number
 
     def export_as_csv(self, request, queryset):
         meta = self.model._meta
@@ -143,8 +150,7 @@ class AnswerOtherAdmin(
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        qs = qs.filter(option__is_other=True)
-        return qs
+        return qs.filter(option__is_other=True)
 
     def other(self, obj):
         return obj.option.other
