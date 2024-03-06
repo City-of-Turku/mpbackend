@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 
 from account.models import MailingList, MailingListEmail, Profile
+from profiles.api.views import update_postal_code_result
 from profiles.models import Result
 
 from .serializers import ProfileSerializer, SubscribeSerializer, UnSubscribeSerializer
@@ -46,6 +47,16 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
         )
         if serializer.is_valid():
             serializer.save()
+            """
+            To ensure the postal code results are updated before the user exists the poll.
+            After the questions are answered the front-end updates the profile information with a put request.
+            """
+            
+            if (
+                request.method == "PUT"
+                and serializer.data.get("postal_code", None) is not None
+            ):
+                update_postal_code_result(user)
             return Response(data=serializer.data, status=status.HTTP_200_OK)
         else:
             return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
