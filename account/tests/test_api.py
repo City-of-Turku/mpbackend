@@ -76,6 +76,47 @@ def test_profile_created(api_client):
 
 
 @pytest.mark.django_db
+def test_profile_put(api_client_authenticated, users, profiles):
+    user = users.get(username="test1")
+    url = reverse("account:profiles-detail", args=[user.id])
+    assert user.profile.is_interested_in_mobility is False
+    assert user.profile.is_filled_for_fun is False
+    assert user.profile.gender is None
+    assert user.profile.postal_code is None
+    assert user.profile.optional_postal_code is None
+    assert user.profile.result_can_be_used is True
+    data = {
+        "postal_code": "20210",
+        "optional_postal_code": "20220",
+        "is_interested_in_mobility": True,
+        "gender": "F",
+        "is_filled_for_fun": True,
+        "result_can_be_used": False,
+    }
+    response = api_client_authenticated.put(url, data)
+    assert response.status_code == 200
+    user.refresh_from_db()
+    assert user.profile.is_interested_in_mobility is True
+    assert user.profile.is_filled_for_fun is True
+    assert user.profile.gender == "F"
+    assert user.profile.postal_code == "20210"
+    assert user.profile.optional_postal_code == "20220"
+    assert user.profile.result_can_be_used is False
+
+
+@pytest.mark.django_db
+def test_profile_patch_is_interested_in_mobility(
+    api_client_authenticated, users, profiles
+):
+    user = users.get(username="test1")
+    assert user.profile.is_interested_in_mobility is False
+    url = reverse("account:profiles-detail", args=[user.id])
+    patch(api_client_authenticated, url, {"is_interested_in_mobility": True})
+    user.refresh_from_db()
+    assert user.profile.is_interested_in_mobility is True
+
+
+@pytest.mark.django_db
 def test_profile_patch_geneder(api_client_authenticated, users, profiles):
     user = users.get(username="test1")
     url = reverse("account:profiles-detail", args=[user.id])
