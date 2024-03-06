@@ -5,17 +5,25 @@ from profiles.admin import DisableAddAdminMixin, DisableDeleteAdminMixin
 
 from .models import MailingList, Profile, User
 
-admin.site.register(User)
+
+class UserAdmin(admin.ModelAdmin):
+    list_display = ("username", "date_joined")
+    ordering = ["-date_joined"]
 
 
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "result")
+    list_display = ("user", "result", "date_joined")
+
+    ordering = ["-user__date_joined"]
 
     def result(self, obj):
         if obj.user.result:
             return obj.user.result.value
         else:
             return None
+
+    def date_joined(self, obj):
+        return obj.user.date_joined
 
 
 class MailingListAdminForm(forms.ModelForm):
@@ -52,5 +60,6 @@ class MailingListAdmin(DisableDeleteAdminMixin, DisableAddAdminMixin, admin.Mode
         return False
 
 
+admin.site.register(User, UserAdmin)
 admin.site.register(Profile, ProfileAdmin)
 admin.site.register(MailingList, MailingListAdmin)
