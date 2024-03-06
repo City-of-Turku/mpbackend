@@ -8,6 +8,7 @@ from freezegun import freeze_time
 from rest_framework.reverse import reverse
 
 from account.models import MailingList, MailingListEmail, User
+from profiles.models import PostalCode, PostalCodeResult
 
 from .utils import check_method_status_codes, patch
 
@@ -76,6 +77,45 @@ def test_profile_created(api_client):
 
 
 @pytest.mark.django_db
+def test_profile_put_creates_postal_code_result(
+    api_client_authenticated, users, profiles
+):
+    user = users.get(username="test1")
+    url = reverse("account:profiles-detail", args=[user.id])
+    data = {
+        "postal_code": "20210",
+        "optional_postal_code": "20220",
+    }
+    response = api_client_authenticated.put(url, data)
+    assert response.status_code == 200
+    assert PostalCodeResult.objects.count() == 2
+    assert (
+        PostalCodeResult.objects.get(
+            postal_code=PostalCode.objects.get(postal_code="20210")
+        ).count
+        == 1
+    )
+    assert (
+        PostalCodeResult.objects.get(
+            postal_code=PostalCode.objects.get(postal_code="20220")
+        ).count
+        == 1
+    )
+
+
+@pytest.mark.django_db
+def test_profile_put_not_creates_postal_code_result(
+    api_client_authenticated, users, profiles
+):
+    user = users.get(username="test1")
+    url = reverse("account:profiles-detail", args=[user.id])
+    data = {"year_of_birth": 42}
+    response = api_client_authenticated.put(url, data)
+    assert response.status_code == 200
+    assert PostalCodeResult.objects.count() == 0
+
+
+@pytest.mark.django_db
 def test_profile_put(api_client_authenticated, users, profiles):
     user = users.get(username="test1")
     url = reverse("account:profiles-detail", args=[user.id])
@@ -123,6 +163,7 @@ def test_profile_patch_geneder(api_client_authenticated, users, profiles):
     patch(api_client_authenticated, url, {"gender": "X"})
     user.refresh_from_db()
     assert user.profile.gender == "X"
+    assert PostalCodeResult.objects.count() == 0
 
 
 @pytest.mark.django_db
@@ -132,6 +173,7 @@ def test_profile_patch_postal_code(api_client_authenticated, users, profiles):
     patch(api_client_authenticated, url, {"postal_code": "20210"})
     user.refresh_from_db()
     assert user.profile.postal_code == "20210"
+    assert PostalCodeResult.objects.count() == 0
 
 
 @pytest.mark.django_db
