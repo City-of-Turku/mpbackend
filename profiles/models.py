@@ -60,6 +60,7 @@ class Result(models.Model):
     topic = models.CharField(max_length=64, null=True)
     description = models.TextField(null=True)
     value = models.CharField(max_length=64, null=True)
+    num_options = models.PositiveSmallIntegerField(null=True)
 
     class Meta:
         ordering = ["id"]
@@ -96,6 +97,7 @@ class Answer(models.Model):
 
 class AnswerOther(Answer):
     # Proxy model that allows registerin Answer model twice to the Admin
+
     class Meta:
         proxy = True
 

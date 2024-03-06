@@ -42,6 +42,9 @@ def test_import_questions():
     assert "Kauris" in results_qs[4].value_fi
     assert "Hjort" in results_qs[4].value_sv
     assert "Deer" in results_qs[4].value_en
+    assert results_qs[0].num_options == 38
+    assert results_qs[4].num_options == 47
+
     # Test questions
     assert Question.objects.count() == 17
     # Test question without sub questions
