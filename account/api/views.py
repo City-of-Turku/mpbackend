@@ -51,7 +51,7 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
             To ensure the postal code results are updated before the user exists the poll.
             After the questions are answered the front-end updates the profile information with a put request.
             """
-            
+
             if (
                 request.method == "PUT"
                 and serializer.data.get("postal_code", None) is not None
