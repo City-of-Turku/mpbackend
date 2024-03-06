@@ -46,6 +46,7 @@ class Profile(models.Model):
     postal_code = models.CharField(max_length=10, null=True)
     optional_postal_code = models.CharField(max_length=10, null=True)
     is_filled_for_fun = models.BooleanField(default=False)
+    is_interested_in_mobility = models.BooleanField(default=False)
     result_can_be_used = models.BooleanField(default=True)
     gender = models.CharField(
         max_length=2, choices=GENDER_OPTIONS, null=True, blank=True
