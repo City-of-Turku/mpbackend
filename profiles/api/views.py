@@ -90,6 +90,7 @@ def sub_question_condition_met(sub_question_condition, user):
 
 
 def question_condition_met(question_condition_qs, user):
+    conditions_met = True
     for question_condition in question_condition_qs:
         if question_condition.sub_question_condition:
             user_answers = Answer.objects.filter(
@@ -104,9 +105,10 @@ def question_condition_met(question_condition_qs, user):
         option_conditions = question_condition.option_conditions.all().values_list(
             "id", flat=True
         )
-        if set(user_answers).intersection(set(option_conditions)):
-            return True
-    return False
+
+        if not set(user_answers).intersection(set(option_conditions)):
+            return False
+    return conditions_met
 
 
 @transaction.atomic
