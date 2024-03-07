@@ -128,6 +128,32 @@ def test_get_questions_with_conditions(
 
 
 @pytest.mark.django_db
+def test_question_with_multiple_subquestion_conditions_is_false(
+    api_client, m_c_users, m_c_answers, m_c_questions, m_c_question_conditions
+):
+    user = m_c_users.get(username="condition false")
+    token = Token.objects.create(user=user)
+    condition_url = reverse("profiles:question-check-if-question-condition-met")
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    condition_question = m_c_questions.get(number="44")
+    response = api_client.post(condition_url, {"question": condition_question.id})
+    assert response.json()["condition_met"] is False
+
+
+@pytest.mark.django_db
+def test_question_with_multiple_subquestion_conditions_is_true(
+    api_client, m_c_users, m_c_answers, m_c_questions, m_c_question_conditions
+):
+    user = m_c_users.get(username="condition true")
+    token = Token.objects.create(user=user)
+    condition_url = reverse("profiles:question-check-if-question-condition-met")
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    condition_question = m_c_questions.get(number="44")
+    response = api_client.post(condition_url, {"question": condition_question.id})
+    assert response.json()["condition_met"] is True
+
+
+@pytest.mark.django_db
 def test_question_condition_is_met(
     api_client, users, answers, questions, question_conditions
 ):
