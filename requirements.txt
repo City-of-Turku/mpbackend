@@ -116,7 +116,7 @@ pyyaml==6.0
     # via drf-spectacular
 six==1.16.0
     # via python-dateutil
-sqlparse==0.4.3
+sqlparse==0.4.4
     # via django
 tomli==2.0.1
     # via
