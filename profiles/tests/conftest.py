@@ -125,6 +125,112 @@ def options_with_multiple_results(questions_test_result, results_test_result):
 
 @pytest.mark.django_db
 @pytest.fixture
+def m_c_questions():
+    Question.objects.create(question="Question with subquesitons", number="42")
+    Question.objects.create(
+        question="Dont ask me if multiple subquestion are answered no", number="44"
+    )
+
+    return Question.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def m_c_sub_questions(m_c_questions):
+    question = m_c_questions.get(number="42")
+    SubQuestion.objects.create(question=question, description="yes/no", order_number=0)
+    SubQuestion.objects.create(question=question, description="yes/no", order_number=1)
+    SubQuestion.objects.create(question=question, description="yes/no", order_number=2)
+    return SubQuestion.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def m_c_options(m_c_questions, m_c_sub_questions):
+    for sub_question in m_c_sub_questions:
+        Option.objects.create(value="no", sub_question=sub_question)
+        Option.objects.create(value="yes", sub_question=sub_question)
+    return Option.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def m_c_question_conditions(m_c_questions, m_c_sub_questions, m_c_options):
+    question = m_c_questions.get(number="44")
+    question_condition = m_c_questions.get(number="42")
+    sub_question_condition = m_c_sub_questions.get(order_number=1)
+    option_condition = m_c_options.get(sub_question=sub_question_condition, value="no")
+    condition = QuestionCondition.objects.create(
+        question=question,
+        question_condition=question_condition,
+        sub_question_condition=sub_question_condition,
+    )
+    condition.option_conditions.add(option_condition)
+    sub_question_condition = m_c_sub_questions.get(order_number=2)
+    option_condition = m_c_options.get(sub_question=sub_question_condition, value="no")
+    condition = QuestionCondition.objects.create(
+        question=question,
+        question_condition=question_condition,
+        sub_question_condition=sub_question_condition,
+    )
+    condition.option_conditions.add(option_condition)
+    return QuestionCondition.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def m_c_users():
+    User.objects.create(username="condition false")
+    User.objects.create(username="condition true")
+    return User.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def m_c_answers(
+    m_c_users, m_c_questions, m_c_sub_questions, m_c_options, m_c_question_conditions
+):
+    user = m_c_users.get(username="condition false")
+    question = m_c_questions.get(number="42")
+    sub_question = m_c_sub_questions.get(order_number=0)
+    option = m_c_options.get(sub_question=sub_question, value="yes")
+    Answer.objects.create(
+        user=user, question=question, sub_question=sub_question, option=option
+    )
+    sub_question = m_c_sub_questions.get(order_number=1)
+    option = m_c_options.get(sub_question=sub_question, value="no")
+    Answer.objects.create(
+        user=user, question=question, sub_question=sub_question, option=option
+    )
+    sub_question = m_c_sub_questions.get(order_number=2)
+    option = m_c_options.get(sub_question=sub_question, value="yes")
+    Answer.objects.create(
+        user=user, question=question, sub_question=sub_question, option=option
+    )
+
+    user = m_c_users.get(username="condition true")
+    question = m_c_questions.get(number="42")
+    sub_question = m_c_sub_questions.get(order_number=0)
+    option = m_c_options.get(sub_question=sub_question, value="yes")
+    Answer.objects.create(
+        user=user, question=question, sub_question=sub_question, option=option
+    )
+    sub_question = m_c_sub_questions.get(order_number=1)
+    option = m_c_options.get(sub_question=sub_question, value="no")
+    Answer.objects.create(
+        user=user, question=question, sub_question=sub_question, option=option
+    )
+    sub_question = m_c_sub_questions.get(order_number=2)
+    option = m_c_options.get(sub_question=sub_question, value="no")
+    Answer.objects.create(
+        user=user, question=question, sub_question=sub_question, option=option
+    )
+
+    return Answer.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
 def questions():
     Question.objects.create(question="Do you use car?", number="1")
     Question.objects.create(question="How often do you use car?", number="1b")
