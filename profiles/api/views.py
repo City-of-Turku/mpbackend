@@ -1,6 +1,7 @@
 import logging
 import uuid
 
+import requests
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.db import IntegrityError, transaction
@@ -87,6 +88,12 @@ def sub_question_condition_met(sub_question_condition, user):
     return Answer.objects.filter(
         user=user, option=sub_question_condition.option
     ).exists()
+
+
+def verify_recaptcha(token):
+    data = {"secret": settings.GOOGLE_RECAPTCHA_SECRET_KEY, "response": token}
+    response = requests.post(settings.GOOGLE_RECAPTCHA_VERIFY_URL, data=data)
+    return response.json().get("success", None)
 
 
 def question_condition_met(question_condition_qs, user):
@@ -187,7 +194,14 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         permission_classes=[AllowAny],
     )
     def start_poll(self, request):
-        # TODO check recaptha
+        try:
+            token = request.data["token"]
+        except KeyError:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        if not verify_recaptcha(token):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
         uuid4 = uuid.uuid4()
         username = f"anonymous_{str(uuid4)}"
         user = User.objects.create(pk=uuid4, username=username, is_generated=True)

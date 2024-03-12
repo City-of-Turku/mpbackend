@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pytest
 from django.db.models import Sum
 from rest_framework.authtoken.models import Token
@@ -155,7 +157,11 @@ def test_postal_code_result(
 
     # post positive
     for i in range(num_users):
-        response = api_client.post(start_poll_url)
+        response = None
+        with patch("profiles.api.views.verify_recaptcha") as mock_verify_recaptcha:
+            mock_verify_recaptcha.return_value = True
+            response = api_client.post(start_poll_url, {"token": "token"})
+
         token = response.json()["token"]
         assert response.status_code == 200
         token = response.json()["token"]
@@ -213,9 +219,11 @@ def test_postal_code_result(
 
     # post negative, but only to user Home postal code
     for i in range(num_users):
-        response = api_client.post(start_poll_url)
-        token = response.json()["token"]
-        assert response.status_code == 200
+        with patch("profiles.api.views.verify_recaptcha") as mock_verify_recaptcha:
+            mock_verify_recaptcha.return_value = True
+            response = api_client.post(start_poll_url, {"token": "token"})
+            token = response.json()["token"]
+            assert response.status_code == 200
         token = response.json()["token"]
         user_id = response.json()["id"]
         assert User.objects.all().count() == num_users + 1 + i
