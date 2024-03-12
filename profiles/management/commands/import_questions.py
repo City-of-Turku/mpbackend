@@ -133,7 +133,10 @@ def create_sub_question_condition(row_data: str, sub_question: SubQuestion):
     question_number, option_order_number = row_data.split(".")
     question = Question.objects.get(number=question_number)
     option = Option.objects.get(question=question, order_number=option_order_number)
-    SubQuestionCondition.objects.get_or_create(sub_question=sub_question, option=option)
+    obj, _ = SubQuestionCondition.objects.get_or_create(
+        sub_question=sub_question, option=option
+    )
+    return obj.id
 
 
 @db.transaction.atomic
@@ -187,6 +190,10 @@ def save_questions(excel_data: pd.DataFrame, results: list):
     num_created = 0
     questions_to_delete = list(Question.objects.all().values_list("id", flat=True))
     options_to_delete = list(Option.objects.all().values_list("id", flat=True))
+    sub_question_conditions_to_delete = list(
+        SubQuestionCondition.objects.all().values_list("id", flat=True)
+    )
+
     in_skipped_question = False
     for index, row_data in excel_data.iterrows():
         question_number = str(row_data[QUESTION_NUMBER_COLUMN])
@@ -264,9 +271,11 @@ def save_questions(excel_data: pd.DataFrame, results: list):
                     get_language_dict(desc_str),
                 )
             if row_data[SUB_QUESTION_CONDITION_COLUMN]:
-                create_sub_question_condition(
+                sub_q_c_id = create_sub_question_condition(
                     row_data[SUB_QUESTION_CONDITION_COLUMN], sub_question
                 )
+                if sub_q_c_id in sub_question_conditions_to_delete:
+                    sub_question_conditions_to_delete.remove(sub_q_c_id)
 
         # Create option
         if question or sub_question and row_data[OPTION_COLUMN]:
@@ -298,7 +307,9 @@ def save_questions(excel_data: pd.DataFrame, results: list):
                 options_to_delete.remove(option.id)
     Question.objects.filter(id__in=questions_to_delete).delete()
     Option.objects.filter(id__in=options_to_delete).delete()
-
+    SubQuestionCondition.objects.filter(
+        id__in=sub_question_conditions_to_delete
+    ).delete()
     logger.info(f"Created {num_created} questions")
 
 
