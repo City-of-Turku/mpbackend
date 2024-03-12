@@ -16,7 +16,7 @@ services:
             dockerfile: ./docker/nginx/Dockerfile
             context: .
         ports:
-            - 80:80      
+            - 443:443      
         depends_on:
             - mpbackend
         networks:
