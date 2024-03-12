@@ -457,9 +457,11 @@ def test_result_count_result_can_be_used_is_false(
 def test_sub_question_condition(
     api_client_authenticated, questions, sub_question_conditions, options, sub_questions
 ):
-    url = reverse("profiles:question-start-poll")
-    response = api_client_authenticated.post(url)
-    assert response.status_code == 200
+    with patch("profiles.api.views.verify_recaptcha") as mock_verify_recaptcha:
+        mock_verify_recaptcha.return_value = True
+        url = reverse("profiles:question-start-poll")
+        response = api_client_authenticated.post(url, {"token": "token"})
+        assert response.status_code == 200
     answer_url = reverse("profiles:answer-list")
     question_condition = questions.get(question="Do you use car?")
     driving_question = questions.get(question="Questions about car driving")
