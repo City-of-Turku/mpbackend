@@ -1,148 +1,268 @@
 import pytest
 from django.db.models import Sum
+from rest_framework.authtoken.models import Token
 from rest_framework.reverse import reverse
 
-from account.models import User
-from profiles.models import (
-    Answer,
-    PostalCode,
-    PostalCodeResult,
-    PostalCodeType,
-    SubQuestion,
-)
-from profiles.tests.utils import delete_memoized_functions_cache
+from account.models import Profile, User
+from profiles.models import Answer, PostalCode, PostalCodeResult, PostalCodeType
+from profiles.tests.conftest import NEG, POS
+
+ANSWER_URL = reverse("profiles:answer-list")
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
-def test_postal_code_result(api_client, questions, sub_questions, options, results):
-    num_users = 21
-    num_answers = 0
-    start_poll_url = reverse("profiles:question-start-poll")
-    end_poll_url = reverse("profiles:question-end-poll")
-    answer_url = reverse("profiles:answer-list")
-    positive_result = results.get(topic="positive")
-    negative_result = results.get(topic="negative")
+def test_postal_code_result_with_postal_code_and_optional_postal_code(
+    api_client, users, questions, options, results
+):
+    user = users.get(username="no answers user")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    Profile.objects.filter(user=user).update(
+        postal_code="20210", optional_postal_code="20220"
+    )
     question1 = questions.get(number="1")
-    question2 = questions.get(number="2")
-    car_sub_q = sub_questions.get(question=question2, description="car")
-    car_sub_q_options = options.filter(sub_question=car_sub_q)
-    q1_options = options.filter(question=question1)
-    questions = {question1: q1_options, car_sub_q: car_sub_q_options}
-    postal_codes = [None, "20100", "20200", "20210", "20100"]
-    postal_code_types = [
-        None,
-        PostalCodeType.HOME_POSTAL_CODE,
-        PostalCodeType.HOME_POSTAL_CODE,
-        PostalCodeType.OPTIONAL_POSTAL_CODE,
-        PostalCodeType.OPTIONAL_POSTAL_CODE,
-    ]
-    start_poll_url = reverse("profiles:question-start-poll")
-    for i in range(num_users):
-        response = api_client.post(start_poll_url)
-        assert response.status_code == 200
-
-        token = response.json()["token"]
-        user_id = response.json()["id"]
-        User.objects.all().count() == 1 + i
-        user = User.objects.get(id=user_id)
-        index = i % 5
-        postal_code_location = postal_code_types[index]
-        if postal_code_location == PostalCodeType.HOME_POSTAL_CODE:
-            user.profile.postal_code = postal_codes[index]
-        elif postal_code_location == PostalCodeType.OPTIONAL_POSTAL_CODE:
-            user.profile.optional_postal_code = postal_codes[index]
-        user.profile.save()
-        # negative options(answer) has index 0, positive 1 in fixures
-        # negative are no/never and positive are yes/daily
-        # Make 2/3 of answers negative
-        if i % 3 < 2:
-            option_index = 0
-        else:
-            option_index = 1
-        for q_item in questions.items():
-            body = {"option": q_item[1][option_index].id}
-            if isinstance(q_item[0], SubQuestion):
-                body["sub_question"] = q_item[0].id
-                body["question"] = q_item[0].question.id
-            else:
-                body["question"] = q_item[0].id
-
-            api_client.credentials(HTTP_AUTHORIZATION=f"Token {token}")
-            response = api_client.post(answer_url, body)
-            num_answers += 1
-            assert Answer.objects.count() == num_answers
-
-        user = User.objects.get(id=user_id)
-        if option_index == 0:
-            assert user.result == negative_result
-        else:
-            assert user.result == positive_result
-
-        response = api_client.post(end_poll_url)
-        assert response.status_code == 200
-        user = User.objects.get(id=user_id)
-        assert user.postal_code_result_saved is True
-        api_client.credentials()
-
-    # Note 20100 is both a Home and Optional postal code
-    assert PostalCode.objects.count() == 3
-    # 2 * 5    number of different results * absolute(home and optional) number of postal codes
-    assert PostalCodeResult.objects.count() == 10
-    # A count should be added for every user that answers and ends the poll
-    assert (
-        PostalCodeResult.objects.aggregate(total_count=(Sum("count")))["total_count"]
-        == num_users
+    option = options.get(question=question1, value="no")
+    response = api_client.post(
+        ANSWER_URL, {"option": option.id, "question": question1.id}
     )
-    num_positive_results = PostalCodeResult.objects.filter(
-        result=positive_result
-    ).aggregate(total_count=(Sum("count")))["total_count"]
-    num_negative_results = PostalCodeResult.objects.filter(
-        result=negative_result
-    ).aggregate(total_count=(Sum("count")))["total_count"]
-    # 1/3 of the results are negative
-    assert num_negative_results == pytest.approx(num_users * (1 / 3), 1)
-    # 2/3 are positive
-    assert num_positive_results == pytest.approx(num_users * (2 / 3), 1)
-
-    url = reverse("profiles:postalcoderesult-list")
-    response = api_client.get(url)
+    assert response.status_code == 201
+    assert Answer.objects.count() == 1
+    response = api_client.post(reverse("profiles:question-end-poll"))
     assert response.status_code == 200
-    assert response.json()["count"] == 10
-    postal_code_20100 = PostalCode.objects.get(postal_code=20100)
-    url = (
-        reverse("profiles:postalcoderesult-list")
-        + f"?postal_code={postal_code_20100.id}"
+    assert PostalCodeResult.objects.count() == 2
+    assert (
+        PostalCodeResult.objects.get(
+            postal_code=PostalCode.objects.get(postal_code="20210")
+        ).count
+        == 1
     )
-    response = api_client.get(url)
-    assert response.json()["count"] == 4
-    postal_code_type_home = PostalCodeType.objects.get(
+    assert PostalCodeResult.objects.get(
+        postal_code=PostalCode.objects.get(postal_code="20210")
+    ).postal_code_type == PostalCodeType.objects.get(
         type_name=PostalCodeType.HOME_POSTAL_CODE
     )
-    url = (
-        reverse("profiles:postalcoderesult-list")
-        + f"?postal_code_type={postal_code_type_home.id}"
+    assert (
+        PostalCodeResult.objects.get(
+            postal_code=PostalCode.objects.get(postal_code="20220")
+        ).count
+        == 1
     )
-    response = api_client.get(url)
-    assert response.json()["count"] == 4
-    url = (
-        reverse("profiles:postalcoderesult-list")
-        + f"?postal_code_type={postal_code_type_home.id}&postal_code={postal_code_20100.id}"
+    assert (
+        PostalCodeResult.objects.get(
+            postal_code=PostalCode.objects.get(postal_code="20220")
+        ).result.topic
+        == "negative"
     )
-    response = api_client.get(url)
-    assert response.json()["count"] == 2
-    url = (
-        reverse("profiles:postalcoderesult-list")
-        + f"?postal_code_string={postal_code_20100.postal_code}"
+    assert PostalCodeResult.objects.get(
+        postal_code=PostalCode.objects.get(postal_code="20220")
+    ).postal_code_type == PostalCodeType.objects.get(
+        type_name=PostalCodeType.OPTIONAL_POSTAL_CODE
     )
-    response = api_client.get(url)
-    assert response.json()["count"] == 4
-    url = (
-        reverse("profiles:postalcoderesult-list")
-        + f"?postal_code_type_string={PostalCodeType.HOME_POSTAL_CODE}"
+    user.refresh_from_db()
+    assert user.postal_code_result_saved is True
+
+
+@pytest.mark.django_db
+def test_postal_code_result_with_postal_code_and_without_optional_postal_code(
+    api_client, users, questions, options, results
+):
+    user = users.get(username="no answers user")
+    Profile.objects.filter(user=user).update(postal_code="20210")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    question1 = questions.get(number="1")
+    option = options.get(question=question1, value="no")
+    response = api_client.post(
+        ANSWER_URL, {"option": option.id, "question": question1.id}
     )
-    response = api_client.get(url)
-    assert response.json()["count"] == 4
+    assert response.status_code == 201
+    assert Answer.objects.count() == 1
+    response = api_client.post(reverse("profiles:question-end-poll"))
+    assert response.status_code == 200
+    assert PostalCodeResult.objects.count() == 2
+    assert (
+        PostalCodeResult.objects.get(
+            postal_code=PostalCode.objects.get(postal_code=20210),
+            postal_code_type=PostalCodeType.objects.get(
+                type_name=PostalCodeType.HOME_POSTAL_CODE
+            ),
+        ).count
+        == 1
+    )
+    assert (
+        PostalCodeResult.objects.get(
+            postal_code=PostalCode.objects.get(postal_code=None),
+            postal_code_type=PostalCodeType.objects.get(
+                type_name=PostalCodeType.OPTIONAL_POSTAL_CODE
+            ),
+        ).count
+        == 1
+    )
+    user.refresh_from_db()
+    assert user.postal_code_result_saved is True
+
+
+@pytest.mark.django_db
+def test_postal_code_result_without_postal_code_and_optional_postal_code(
+    api_client, users, questions, options, results
+):
+    user = users.get(username="no answers user")
+    token = Token.objects.create(user=user)
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    question1 = questions.get(number="1")
+    option = options.get(question=question1, value="no")
+    response = api_client.post(
+        ANSWER_URL, {"option": option.id, "question": question1.id}
+    )
+    assert response.status_code == 201
+    assert Answer.objects.count() == 1
+    response = api_client.post(reverse("profiles:question-end-poll"))
+    assert response.status_code == 200
+    assert PostalCodeResult.objects.count() == 2
+    assert (
+        PostalCodeResult.objects.get(
+            postal_code=PostalCode.objects.get(postal_code=None),
+            postal_code_type=PostalCodeType.objects.get(
+                type_name=PostalCodeType.HOME_POSTAL_CODE
+            ),
+        ).count
+        == 1
+    )
+    assert (
+        PostalCodeResult.objects.get(
+            postal_code=PostalCode.objects.get(postal_code=None),
+            postal_code_type=PostalCodeType.objects.get(
+                type_name=PostalCodeType.OPTIONAL_POSTAL_CODE
+            ),
+        ).count
+        == 1
+    )
+    user.refresh_from_db()
+    assert user.postal_code_result_saved is True
+
+
+@pytest.mark.django_db
+def test_postal_code_result(
+    api_client, results_test_result, options_test_result, questions_test_result
+):
+    num_users = 5
+    num_answers = 0
+    start_poll_url = reverse("profiles:question-start-poll")
+    postal_codes = [None, "20100", "20200", "20100", None]
+    q1 = questions_test_result.get(number="1")
+    q1_option_pos = options_test_result.get(question=q1, value=POS)
+    q1_option_neg = options_test_result.get(question=q1, value=NEG)
+
+    # post positive
+    for i in range(num_users):
+        response = api_client.post(start_poll_url)
+        token = response.json()["token"]
+        assert response.status_code == 200
+        token = response.json()["token"]
+        user_id = response.json()["id"]
+        assert User.objects.all().count() == 1 + i
+        user = User.objects.get(id=user_id)
+        user.profile.postal_code = postal_codes[i]
+        user.profile.optional_postal_code = postal_codes[i]
+        user.profile.save()
+        api_client.credentials(HTTP_AUTHORIZATION=f"Token {token}")
+        api_client.post(ANSWER_URL, {"option": q1_option_pos.id, "question": q1.id})
+        num_answers += 1
+        assert Answer.objects.count() == num_answers
+        response = api_client.post(reverse("profiles:question-end-poll"))
+        api_client.credentials()
+    assert PostalCodeResult.objects.count() == 6
+    assert PostalCode.objects.count() == 3
+    assert PostalCodeType.objects.count() == 2
+    assert (
+        PostalCodeResult.objects.get(
+            postal_code=PostalCode.objects.get(postal_code=None),
+            postal_code_type=PostalCodeType.objects.get(
+                type_name=PostalCodeType.HOME_POSTAL_CODE
+            ),
+        ).count
+        == 2
+    )
+    assert (
+        PostalCodeResult.objects.get(
+            postal_code=PostalCode.objects.get(postal_code="20100"),
+            postal_code_type=PostalCodeType.objects.get(
+                type_name=PostalCodeType.HOME_POSTAL_CODE
+            ),
+        ).count
+        == 2
+    )
+    assert (
+        PostalCodeResult.objects.get(
+            postal_code=PostalCode.objects.get(postal_code="20200"),
+            postal_code_type=PostalCodeType.objects.get(
+                type_name=PostalCodeType.HOME_POSTAL_CODE
+            ),
+        ).count
+        == 1
+    )
+    assert (
+        PostalCodeResult.objects.get(
+            postal_code=PostalCode.objects.get(postal_code=None),
+            postal_code_type=PostalCodeType.objects.get(
+                type_name=PostalCodeType.HOME_POSTAL_CODE
+            ),
+        ).result.topic
+        == POS
+    )
+
+    # post negative, but only to user Home postal code
+    for i in range(num_users):
+        response = api_client.post(start_poll_url)
+        token = response.json()["token"]
+        assert response.status_code == 200
+        token = response.json()["token"]
+        user_id = response.json()["id"]
+        assert User.objects.all().count() == num_users + 1 + i
+        user = User.objects.get(id=user_id)
+        user.profile.postal_code = postal_codes[i]
+        user.profile.optional_postal_code = None
+        user.profile.save()
+        api_client.credentials(HTTP_AUTHORIZATION=f"Token {token}")
+        api_client.post(ANSWER_URL, {"option": q1_option_neg.id, "question": q1.id})
+        num_answers += 1
+        assert Answer.objects.count() == num_answers
+        response = api_client.post(reverse("profiles:question-end-poll"))
+        api_client.credentials()
+    neg_result = results_test_result.get(topic=NEG)
+    pos_result = results_test_result.get(topic=POS)
+
+    assert PostalCode.objects.count() == 3
+    assert PostalCodeType.objects.count() == 2
+    assert PostalCodeResult.objects.count() == 10  # 6 +4
+    assert PostalCodeResult.objects.filter(result=neg_result).count() == 4
+    assert PostalCodeResult.objects.get(
+        result=neg_result,
+        postal_code_type=PostalCodeType.objects.get(
+            type_name=PostalCodeType.OPTIONAL_POSTAL_CODE
+        ),
+    ).count == len(postal_codes)
+    assert (
+        PostalCodeResult.objects.get(
+            result=neg_result,
+            postal_code_type=PostalCodeType.objects.get(
+                type_name=PostalCodeType.OPTIONAL_POSTAL_CODE
+            ),
+        ).result.topic
+        == NEG
+    )
+    assert (
+        PostalCodeResult.objects.filter(result=pos_result).aggregate(
+            total_count=(Sum("count"))
+        )["total_count"]
+        == len(postal_codes) * 2
+    )
+    assert (
+        PostalCodeResult.objects.filter(result=neg_result).aggregate(
+            total_count=(Sum("count"))
+        )["total_count"]
+        == len(postal_codes) * 2
+    )
 
 
 @pytest.mark.django_db

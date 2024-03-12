@@ -1,4 +1,7 @@
+import csv
+
 from django.contrib import admin
+from django.http import HttpResponse
 
 from profiles.models import (
     Answer,
@@ -15,7 +18,12 @@ from profiles.models import (
 )
 
 
-class ReadOnlyFieldsAdminMixin:
+class DisableAddAdminMixin:
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+class DisableChangeAdminMixin:
     def has_change_permission(self, request, obj=None):
         return False
 
@@ -25,42 +33,63 @@ class DisableDeleteAdminMixin:
         return False
 
 
-class QuestionAdmin(DisableDeleteAdminMixin, admin.ModelAdmin):
+class QuestionAdmin(DisableDeleteAdminMixin, DisableAddAdminMixin, admin.ModelAdmin):
     class Meta:
         model = Question
 
 
 class QuestionConditionAdmin(
-    DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
 ):
     class Meta:
         model = QuestionCondition
 
 
-class SubQuestionAdmin(DisableDeleteAdminMixin, admin.ModelAdmin):
+class SubQuestionAdmin(DisableDeleteAdminMixin, DisableAddAdminMixin, admin.ModelAdmin):
     class Meta:
         model = Question
 
 
-class ResultAdmin(DisableDeleteAdminMixin, admin.ModelAdmin):
+class ResultAdmin(
+    DisableDeleteAdminMixin,
+    DisableAddAdminMixin,
+    DisableChangeAdminMixin,
+    admin.ModelAdmin,
+):
     class Meta:
         model = Result
 
 
 class SubQuestionConditionAdmin(
-    DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
 ):
     class Meta:
         model = SubQuestionCondition
 
 
-class OptionAdmin(DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin):
+class OptionAdmin(
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
+):
     class Meta:
         model = Option
 
 
 @admin.register(Answer)
-class AnswerAdmin(DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin):
+class AnswerAdmin(
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
+):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         qs = qs.filter(option__is_other=False)
@@ -72,18 +101,56 @@ class AnswerAdmin(DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.Model
 
 @admin.register(AnswerOther)
 class AnswerOtherAdmin(
-    DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
 ):
+    ordering = ["question", "sub_question"]
+
+    actions = ["export_as_csv"]
+    list_per_page = 10000
     list_display = (
+        "question_number",
         "question_description",
         "sub_question_description",
         "other",
     )
 
+    def question_number(self, obj):
+        if obj.sub_question:
+            return obj.sub_question.question.number
+        return obj.question.number
+
+    def export_as_csv(self, request, queryset):
+        meta = self.model._meta
+        queryset = queryset.order_by("question", "sub_question")
+        field_names = ["id", "created", "question", "sub_question", "option", "other"]
+        str_fields = ["question", "sub_question", "other"]
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename={}.csv".format(meta)
+        writer = csv.writer(response)
+        writer.writerow(field_names)
+        for obj in queryset:
+            row = []
+            for field in field_names:
+                attr = getattr(obj, field)
+                if field == "question" and attr is None:
+                    attr = obj.sub_question.question
+                if field in str_fields:
+                    attr = (
+                        str(attr).replace('"', "'").replace("\n", " ").replace("\r", "")
+                    )
+                row.append(attr)
+            writer.writerow(row)
+
+        return response
+
+    export_as_csv.short_description = "Export selected as CSV"
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
-        qs = qs.filter(option__is_other=True)
-        return qs
+        return qs.filter(option__is_other=True)
 
     def other(self, obj):
         return obj.option.other
@@ -104,21 +171,30 @@ class AnswerOtherAdmin(
 
 
 class PostalCodeAdmin(
-    DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
 ):
     class Meta:
         model = PostalCode
 
 
 class PostalCodeTypeAdmin(
-    DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
 ):
     class Meta:
         model = PostalCodeType
 
 
 class PostalCodeResultAdmin(
-    DisableDeleteAdminMixin, ReadOnlyFieldsAdminMixin, admin.ModelAdmin
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
 ):
     list_display = ("postal_code", "postal_code_type", "result", "count")
 

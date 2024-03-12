@@ -42,6 +42,13 @@ def test_import_questions():
     assert "Kauris" in results_qs[4].value_fi
     assert "Hjort" in results_qs[4].value_sv
     assert "Deer" in results_qs[4].value_en
+    assert results_qs[0].num_options == 38
+    assert results_qs[1].num_options == 29
+    assert results_qs[2].num_options == 32
+    assert results_qs[3].num_options == 38
+    assert results_qs[4].num_options == 52
+    assert results_qs[5].num_options == 60
+
     # Test questions
     assert Question.objects.count() == 17
     # Test question without sub questions
@@ -76,7 +83,7 @@ def test_import_questions():
 
     question4 = Question.objects.get(number="4")
     assert question4.mandatory_number_of_sub_questions_to_answer == "*"
-    assert SubQuestion.objects.filter(question=question4).count() == 6
+    assert SubQuestion.objects.filter(question=question4).count() == 7
     joukkoliikenne = SubQuestion.objects.get(question=question4, order_number=2)
     assert (
         joukkoliikenne.additional_description
@@ -121,7 +128,7 @@ def test_import_questions():
         assert Question.objects.filter(number=number).count() == 0
     # Test other options
     other_options_qs = Option.objects.filter(is_other=True)
-    assert other_options_qs.count() == 15
+    assert other_options_qs.count() == 17
     # Test has matched "//Other"
     assert (
         other_options_qs.filter(question=Question.objects.get(number="1a")).exists()

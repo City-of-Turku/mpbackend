@@ -3,7 +3,6 @@ from rest_framework.authtoken.models import Token
 from rest_framework.reverse import reverse
 
 from profiles.models import Answer, Option, Question, SubQuestion
-from profiles.tests.utils import delete_memoized_functions_cache
 
 
 def test_answer_post_unauthenticated(api_client):
@@ -14,6 +13,15 @@ def test_answer_post_unauthenticated(api_client):
 
 @pytest.mark.django_db
 @delete_memoized_functions_cache
+def test_start_poll(api_client):
+    User.objects.all().count() == 0
+    url = reverse("profiles:question-start-poll")
+    response = api_client.post(url)
+    assert response.status_code == 200
+    assert User.objects.all().count() == 1
+
+
+@pytest.mark.django_db
 def test_post_answer(api_client_authenticated, users, questions, options):
     user = users.get(username="test1")
     assert Answer.objects.count() == 0
@@ -30,7 +38,6 @@ def test_post_answer(api_client_authenticated, users, questions, options):
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
 def test_post_answer_with_other_option(api_client, users, answers, questions, options):
     user = users.get(username="no answers user")
     token = Token.objects.create(user=user)
@@ -56,7 +63,6 @@ def test_post_answer_with_other_option(api_client, users, answers, questions, op
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
 def test_post_answer_answer_is_updated(
     api_client_authenticated, users, answers, questions, options
 ):
@@ -119,7 +125,6 @@ def test_post_answer_where_question_not_related_to_option(
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
 def test_answer_get_result(api_client_authenticated, users, answers):
     url = reverse("profiles:answer-get-result")
     response = api_client_authenticated.get(url)
@@ -128,7 +133,6 @@ def test_answer_get_result(api_client_authenticated, users, answers):
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
 def test_post_answer_where_condition_not_met(
     api_client,
     users,
@@ -153,7 +157,6 @@ def test_post_answer_where_condition_not_met(
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
 def test_post_answer_where_condition_is_met(
     api_client,
     users,
