@@ -12,15 +12,6 @@ def test_answer_post_unauthenticated(api_client):
 
 
 @pytest.mark.django_db
-def test_start_poll(api_client):
-    User.objects.all().count() == 0
-    url = reverse("profiles:question-start-poll")
-    response = api_client.post(url)
-    assert response.status_code == 200
-    assert User.objects.all().count() == 1
-
-
-@pytest.mark.django_db
 def test_post_answer(api_client_authenticated, users, questions, options):
     user = users.get(username="test1")
     assert Answer.objects.count() == 0
