@@ -26,8 +26,8 @@ def api_client_with_custom_ip_address(ip_address):
 
 
 @pytest.fixture
-def users():
-    User.objects.create(username="test1")
+def users(results):
+    User.objects.create(username="test1", result=results.first())
     return User.objects.all()
 
 

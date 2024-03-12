@@ -122,6 +122,13 @@ def get_and_create_results(data: pd.DataFrame) -> list:
 
 
 @db.transaction.atomic
+def update_results_num_options():
+    for result in Result.objects.all():
+        result.num_options = Option.objects.filter(results=result).count()
+        result.save()
+
+
+@db.transaction.atomic
 def create_sub_question_condition(row_data: str, sub_question: SubQuestion):
     question_number, option_order_number = row_data.split(".")
     question = Question.objects.get(number=question_number)
@@ -305,3 +312,4 @@ class Command(BaseCommand):
         excel_data = excel_data.fillna("").replace([""], [None])
         results = get_and_create_results(excel_data)
         save_questions(excel_data, results)
+        update_results_num_options()

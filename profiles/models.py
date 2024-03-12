@@ -14,7 +14,7 @@ class Question(models.Model):
         ordering = ["id"]
 
     def __str__(self):
-        return f"question number:{self.number}, question: {self.question}"
+        return f"{self.number}: {self.question}"
 
     @property
     def num_sub_questions(self):
@@ -53,13 +53,14 @@ class Option(models.Model):
         ordering = ["order_number"]
 
     def __str__(self):
-        return f"Value: {self.value}"
+        return f"{self.value}"
 
 
 class Result(models.Model):
     topic = models.CharField(max_length=64, null=True)
     description = models.TextField(null=True)
     value = models.CharField(max_length=64, null=True)
+    num_options = models.PositiveSmallIntegerField(null=True)
 
     class Meta:
         ordering = ["id"]
@@ -96,6 +97,7 @@ class Answer(models.Model):
 
 class AnswerOther(Answer):
     # Proxy model that allows registerin Answer model twice to the Admin
+
     class Meta:
         proxy = True
 

@@ -97,6 +97,7 @@ def verify_recaptcha(token):
 
 
 def question_condition_met(question_condition_qs, user):
+    conditions_met = True
     for question_condition in question_condition_qs:
         if question_condition.sub_question_condition:
             user_answers = Answer.objects.filter(
@@ -111,9 +112,10 @@ def question_condition_met(question_condition_qs, user):
         option_conditions = question_condition.option_conditions.all().values_list(
             "id", flat=True
         )
-        if set(user_answers).intersection(set(option_conditions)):
-            return True
-    return False
+
+        if not set(user_answers).intersection(set(option_conditions)):
+            return False
+    return conditions_met
 
 
 @transaction.atomic
@@ -134,21 +136,28 @@ def update_postal_code_result(user):
         return
     postal_code = None
     postal_code_type = None
-    if user.profile.postal_code:
-        postal_code, _ = PostalCode.objects.get_or_create(
-            postal_code=user.profile.postal_code
+    postal_code, _ = PostalCode.objects.get_or_create(
+        postal_code=user.profile.postal_code
+    )
+    postal_code_type, _ = PostalCodeType.objects.get_or_create(
+        type_name=PostalCodeType.HOME_POSTAL_CODE
+    )
+    try:
+        postal_code_result, _ = PostalCodeResult.objects.get_or_create(
+            postal_code=postal_code, postal_code_type=postal_code_type, result=result
         )
-        postal_code_type, _ = PostalCodeType.objects.get_or_create(
-            type_name=PostalCodeType.HOME_POSTAL_CODE
-        )
-    if user.profile.optional_postal_code:
-        postal_code, _ = PostalCode.objects.get_or_create(
-            postal_code=user.profile.optional_postal_code
-        )
-        postal_code_type, _ = PostalCodeType.objects.get_or_create(
-            type_name=PostalCodeType.OPTIONAL_POSTAL_CODE
-        )
+    except IntegrityError as e:
+        logger.error(f"IntegrityError while creating PostalCodeResult: {e}")
+        return
+    postal_code_result.count += 1
+    postal_code_result.save()
 
+    postal_code, _ = PostalCode.objects.get_or_create(
+        postal_code=user.profile.optional_postal_code
+    )
+    postal_code_type, _ = PostalCodeType.objects.get_or_create(
+        type_name=PostalCodeType.OPTIONAL_POSTAL_CODE
+    )
     try:
         postal_code_result, _ = PostalCodeResult.objects.get_or_create(
             postal_code=postal_code, postal_code_type=postal_code_type, result=result

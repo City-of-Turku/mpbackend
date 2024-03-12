@@ -17,5 +17,3 @@ django-cors-headers
 freezegun
 django-filter
 pymemcache
-django-memoize
-requests

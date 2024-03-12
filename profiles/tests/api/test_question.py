@@ -9,7 +9,6 @@ from rest_framework.reverse import reverse
 
 from account.models import User
 from profiles.models import Answer, PostalCodeResult
-from profiles.tests.utils import delete_memoized_functions_cache
 
 
 @pytest.mark.django_db
@@ -75,7 +74,6 @@ def test_questions_condition_states_not_authenticated(
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
 def test_questions_condition_states_after_post_answer(
     api_client, users, questions, question_conditions, options
 ):
@@ -108,7 +106,6 @@ def test_questions_condition_states_after_post_answer(
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
 def test_questions_condition_states(
     api_client, users, answers, questions, question_conditions
 ):
@@ -150,7 +147,6 @@ def test_questions_condition_states(
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
 def test_get_questions_with_conditions(
     api_client, users, answers, questions, question_conditions
 ):
@@ -163,7 +159,32 @@ def test_get_questions_with_conditions(
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
+def test_question_with_multiple_subquestion_conditions_is_false(
+    api_client, m_c_users, m_c_answers, m_c_questions, m_c_question_conditions
+):
+    user = m_c_users.get(username="condition false")
+    token = Token.objects.create(user=user)
+    condition_url = reverse("profiles:question-check-if-question-condition-met")
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    condition_question = m_c_questions.get(number="44")
+    response = api_client.post(condition_url, {"question": condition_question.id})
+    assert response.json()["condition_met"] is False
+
+
+@pytest.mark.django_db
+def test_question_with_multiple_subquestion_conditions_is_true(
+    api_client, m_c_users, m_c_answers, m_c_questions, m_c_question_conditions
+):
+    user = m_c_users.get(username="condition true")
+    token = Token.objects.create(user=user)
+    condition_url = reverse("profiles:question-check-if-question-condition-met")
+    api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+    condition_question = m_c_questions.get(number="44")
+    response = api_client.post(condition_url, {"question": condition_question.id})
+    assert response.json()["condition_met"] is True
+
+
+@pytest.mark.django_db
 def test_question_condition_is_met(
     api_client, users, answers, questions, question_conditions
 ):
@@ -179,7 +200,6 @@ def test_question_condition_is_met(
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
 def test_question_condition_not_met(
     api_client, users, answers, questions, question_conditions
 ):
@@ -217,7 +237,6 @@ def test_question_with_sub_question_condition_is_met(
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
 def test_question_with_sub_question_condition_not_met(
     api_client,
     users,
@@ -395,7 +414,7 @@ def test_result_count_is_filled_for_fun_is_false(
     url = reverse("profiles:question-end-poll")
     response = api_client_authenticated.post(url)
     assert response.status_code == 200
-    assert PostalCodeResult.objects.count() == 1
+    assert PostalCodeResult.objects.count() == 2
 
 
 @pytest.mark.django_db
@@ -410,7 +429,6 @@ def test_result_count_is_filled_for_fun_is_true(api_client_authenticated, users)
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
 def test_result_count_result_can_be_used_is_true(
     api_client_authenticated, users, answers
 ):
@@ -419,11 +437,10 @@ def test_result_count_result_can_be_used_is_true(
     url = reverse("profiles:question-end-poll")
     response = api_client_authenticated.post(url)
     assert response.status_code == 200
-    assert PostalCodeResult.objects.count() == 1
+    assert PostalCodeResult.objects.count() == 2
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
 def test_result_count_result_can_be_used_is_false(
     api_client_authenticated, users, answers
 ):
@@ -437,7 +454,6 @@ def test_result_count_result_can_be_used_is_false(
 
 
 @pytest.mark.django_db
-@delete_memoized_functions_cache
 def test_sub_question_condition(
     api_client_authenticated, questions, sub_question_conditions, options, sub_questions
 ):

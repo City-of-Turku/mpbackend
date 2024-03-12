@@ -1,19 +1,29 @@
 from django import forms
 from django.contrib import admin
 
+from profiles.admin import DisableAddAdminMixin, DisableDeleteAdminMixin
+
 from .models import MailingList, Profile, User
 
-admin.site.register(User)
+
+class UserAdmin(admin.ModelAdmin):
+    list_display = ("username", "date_joined")
+    ordering = ["-date_joined"]
 
 
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "result")
+    list_display = ("user", "result", "date_joined")
+
+    ordering = ["-user__date_joined"]
 
     def result(self, obj):
         if obj.user.result:
             return obj.user.result.value
         else:
             return None
+
+    def date_joined(self, obj):
+        return obj.user.date_joined
 
 
 class MailingListAdminForm(forms.ModelForm):
@@ -24,7 +34,7 @@ class MailingListAdminForm(forms.ModelForm):
         fields = ["result"]
 
 
-class MailingListAdmin(admin.ModelAdmin):
+class MailingListAdmin(DisableDeleteAdminMixin, DisableAddAdminMixin, admin.ModelAdmin):
     list_display = ("result", "csv_emails")
 
     readonly_fields = ("result",)
@@ -50,5 +60,6 @@ class MailingListAdmin(admin.ModelAdmin):
         return False
 
 
+admin.site.register(User, UserAdmin)
 admin.site.register(Profile, ProfileAdmin)
 admin.site.register(MailingList, MailingListAdmin)

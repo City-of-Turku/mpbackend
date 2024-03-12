@@ -1,22 +1,11 @@
 import secrets
 import string
 
-from memoize import memoize
-
 from account.models import User
-from profiles.models import Answer, Option, Result
-
-
-@memoize(timeout=60 * 60)
-def get_num_results_per_option() -> dict:
-    results = {}
-    for result in Result.objects.all():
-        results[result] = Option.objects.filter(results=result).count()
-    return results
+from profiles.models import Answer, Result
 
 
 def get_user_result(user: User) -> Result:
-    num_results_in_option = get_num_results_per_option()
     answer_qs = Answer.objects.filter(user=user)
     if answer_qs.count() == 0:
         return None
@@ -34,7 +23,7 @@ def get_user_result(user: User) -> Result:
     results = {}
 
     for result in Result.objects.all():
-        results[result] = cum_results[result] / num_results_in_option[result]
+        results[result] = cum_results[result] / result.num_options
 
     # The result is the highest relative result
     result = max(results, key=results.get)
