@@ -1,16 +1,17 @@
-from base64 import b64encode
+import base64
 
 import django_filters
 from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad
 from rest_framework.exceptions import ValidationError
 
 from profiles.models import PostalCodeResult
 
 
 def decrypt_text(text, key):
-    cipher = AES.new(key.encode(), AES.MODE_EAX)
-    cipher_text, tag = cipher.encrypt_and_digest(text.encode("utf-8"))
-    return b64encode(cipher.nonce + tag + cipher_text).decode("utf-8")
+    text = pad(text.encode(), 16)
+    cipher = AES.new(key.encode("utf-8"), AES.MODE_ECB)
+    return base64.b64encode(cipher.encrypt(text))
 
 
 class CustomValidationError(ValidationError):
