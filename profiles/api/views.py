@@ -56,7 +56,7 @@ from profiles.models import (
 )
 from profiles.utils import generate_password, get_user_result
 
-from .utils import PostalCodeResultFilter
+from .utils import decrypt_text, PostalCodeResultFilter
 
 logger = logging.getLogger(__name__)
 
@@ -187,7 +187,6 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         permission_classes=[AllowAny],
     )
     def start_poll(self, request):
-        # TODO check recaptha
         uuid4 = uuid.uuid4()
         username = f"anonymous_{str(uuid4)}"
         user = User.objects.create(pk=uuid4, username=username, is_generated=True)
@@ -196,7 +195,8 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         user.profile = Profile.objects.create(user=user)
         user.save()
         token, _ = Token.objects.get_or_create(user=user)
-        response_data = {"token": token.key, "id": user.id}
+        data = decrypt_text(token.key, settings.TOKEN_SECRET)
+        response_data = {"data": data, "id": user.id}
         return Response(response_data, status=status.HTTP_200_OK)
 
     @extend_schema(
