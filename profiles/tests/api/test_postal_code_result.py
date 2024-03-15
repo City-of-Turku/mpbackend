@@ -147,7 +147,6 @@ def test_postal_code_result(
 ):
     num_users = 5
     num_answers = 0
-    start_poll_url = reverse("profiles:question-start-poll")
     postal_codes = [None, "20100", "20200", "20100", None]
     q1 = questions_test_result.get(number="1")
     q1_option_pos = options_test_result.get(question=q1, value=POS)
@@ -155,22 +154,19 @@ def test_postal_code_result(
 
     # post positive
     for i in range(num_users):
-        response = api_client.post(start_poll_url)
-        token = response.json()["token"]
-        assert response.status_code == 200
-        token = response.json()["token"]
-        user_id = response.json()["id"]
+        user = User.objects.create(username=f"user_{i}")
+        Profile.objects.create(user=user)
+        token = Token.objects.create(user=user)
+        api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
         assert User.objects.all().count() == 1 + i
-        user = User.objects.get(id=user_id)
         user.profile.postal_code = postal_codes[i]
         user.profile.optional_postal_code = postal_codes[i]
         user.profile.save()
-        api_client.credentials(HTTP_AUTHORIZATION=f"Token {token}")
         api_client.post(ANSWER_URL, {"option": q1_option_pos.id, "question": q1.id})
         num_answers += 1
         assert Answer.objects.count() == num_answers
-        response = api_client.post(reverse("profiles:question-end-poll"))
-        api_client.credentials()
+        api_client.post(reverse("profiles:question-end-poll"))
+
     assert PostalCodeResult.objects.count() == 6
     assert PostalCode.objects.count() == 3
     assert PostalCodeType.objects.count() == 2
@@ -213,13 +209,12 @@ def test_postal_code_result(
 
     # post negative, but only to user Home postal code
     for i in range(num_users):
-        response = api_client.post(start_poll_url)
-        token = response.json()["token"]
-        assert response.status_code == 200
-        token = response.json()["token"]
-        user_id = response.json()["id"]
+        user = User.objects.create(username=f"neg_user_{i}")
+        Profile.objects.create(user=user)
+        token = Token.objects.create(user=user)
+        api_client.credentials(HTTP_AUTHORIZATION="Token " + token.key)
+
         assert User.objects.all().count() == num_users + 1 + i
-        user = User.objects.get(id=user_id)
         user.profile.postal_code = postal_codes[i]
         user.profile.optional_postal_code = None
         user.profile.save()
@@ -227,8 +222,8 @@ def test_postal_code_result(
         api_client.post(ANSWER_URL, {"option": q1_option_neg.id, "question": q1.id})
         num_answers += 1
         assert Answer.objects.count() == num_answers
-        response = api_client.post(reverse("profiles:question-end-poll"))
-        api_client.credentials()
+        api_client.post(reverse("profiles:question-end-poll"))
+
     neg_result = results_test_result.get(topic=NEG)
     pos_result = results_test_result.get(topic=POS)
 
