@@ -10,15 +10,12 @@ from profiles.models import Answer, Result
 
 
 def encrypt_text(text, key):
-    cipher = AES.new(key.encode("utf-8"), AES.MODE_CBC)
-    # Pad the text to make its length a multiple of 16 bytes (AES block size)
-    padded_text = pad(text.encode("utf-8"), AES.block_size)
-    # Encrypt the padded text
-    encrypted_bytes = cipher.encrypt(padded_text)
-    # Encode the encrypted bytes in base64
-    encrypted_text = base64.b64encode(encrypted_bytes).decode("utf-8")
-
-    return encrypted_text
+    text = pad(text.encode(), 16)
+    iv = "BBBBBBBBBBBBBBBB".encode("utf-8")
+    cipher = AES.new(key.encode("utf-8"), AES.MODE_CBC, iv)
+    return base64.b64encode(cipher.encrypt(text)), base64.b64encode(cipher.iv).decode(
+        "utf-8"
+    )
 
 
 def get_user_result(user: User) -> Result:
