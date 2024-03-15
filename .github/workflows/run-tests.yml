@@ -13,6 +13,9 @@ jobs:
     env:
       # Database for tests
       DATABASE_URL: postgres://postgres:postgres@localhost/mobilityprofile
+      TOKEN_SECRET: dgj533GDG242fdsM
+
+
      
 
     steps:
