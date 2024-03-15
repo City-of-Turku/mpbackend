@@ -32,7 +32,6 @@ def test_token_expiration(api_client_authenticated, users, profiles):
 
 @pytest.mark.django_db
 def test_unauthenticated_cannot_do_anything(api_client, users):
-    # TODO, add start-poll url after recaptcha integration
     urls = [
         reverse("account:profiles-detail", args=[users.get(username="test1").id]),
     ]
