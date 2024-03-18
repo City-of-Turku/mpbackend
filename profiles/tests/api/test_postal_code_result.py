@@ -11,6 +11,21 @@ ANSWER_URL = reverse("profiles:answer-list")
 
 
 @pytest.mark.django_db
+def test_blur_count(api_client, results):
+    postal_code_result = PostalCodeResult.objects.create(
+        count=5, result=results.first()
+    )
+    url = reverse("profiles:postalcoderesult-detail", args=[str(postal_code_result.id)])
+    response = api_client.get(url)
+    assert response.status_code == 200
+    assert response.json()["count"] == 0
+    postal_code_result.count = 6
+    postal_code_result.save()
+    response = api_client.get(url)
+    assert response.json()["count"] == 6
+
+
+@pytest.mark.django_db
 def test_postal_code_result_with_postal_code_and_optional_postal_code(
     api_client, users, questions, options, results
 ):
