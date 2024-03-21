@@ -13,6 +13,8 @@ from profiles.models import (
     SubQuestionCondition,
 )
 
+from .utils import blur_count
+
 
 class ResultSerializer(serializers.ModelSerializer):
     class Meta:
@@ -130,6 +132,11 @@ class PostalCodeResultSerializer(serializers.ModelSerializer):
             "result_topic_en",
             "count",
         ]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation["count"] = blur_count(instance.count)
+        return representation
 
 
 class PostalCodeSerializer(serializers.ModelSerializer):
