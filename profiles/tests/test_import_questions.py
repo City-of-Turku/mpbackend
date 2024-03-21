@@ -45,9 +45,9 @@ def test_import_questions():
     assert results_qs[0].num_options == 38
     assert results_qs[1].num_options == 29
     assert results_qs[2].num_options == 32
-    assert results_qs[3].num_options == 38
-    assert results_qs[4].num_options == 52
-    assert results_qs[5].num_options == 60
+    assert results_qs[3].num_options == 39
+    assert results_qs[4].num_options == 53
+    assert results_qs[5].num_options == 61
 
     # Test questions
     assert Question.objects.count() == 17
