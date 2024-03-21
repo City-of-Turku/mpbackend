@@ -4,6 +4,17 @@ from rest_framework.exceptions import ValidationError
 from profiles.models import PostalCodeResult
 
 
+def blur_count(count, threshold=5):
+    """
+    Returns a blurred count, which is supposed to hide individual
+    postal code results.
+    """
+    if count <= threshold:
+        return 0
+    else:
+        return count
+
+
 class CustomValidationError(ValidationError):
     # The detail field is shown also when DEBUG=False
     # Ensures the error message is displayed to the user

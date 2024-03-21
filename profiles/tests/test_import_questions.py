@@ -72,6 +72,8 @@ def test_import_questions():
     assert sq_auto_4_5_results[0] == autoilija
     assert sq_auto_4_5_results[1].topic_en == "Habit traveler"
 
+    assert Question.objects.get(number="5").options.count() == 20
+
     sq_walk = sub_q_qs.get(order_number=6)
     sq_walk.description_sv == "Gående"
     assert Option.objects.filter(sub_question=sq_walk).count() == 5
