@@ -1,8 +1,29 @@
+import base64
+import os
 import secrets
 import string
 
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+
 from account.models import User
 from profiles.models import Answer, Result
+
+
+def encrypt_text(text, key):
+    text = pad(text.encode(), 16)
+    iv = os.urandom(16)
+    cipher = AES.new(key.encode("utf-8"), AES.MODE_CBC, iv)
+    return base64.b64encode(cipher.encrypt(text)), base64.b64encode(cipher.iv).decode(
+        "utf-8"
+    )
+
+
+def decrypt_text(enc, key, iv):
+    iv = base64.b64decode(iv)
+    enc = base64.b64decode(enc)
+    cipher = AES.new(key.encode("utf-8"), AES.MODE_CBC, iv)
+    return unpad(cipher.decrypt(enc), 16).decode()
 
 
 def get_user_result(user: User) -> Result:

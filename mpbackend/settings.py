@@ -23,6 +23,7 @@ env = environ.Env(
     STATIC_URL=(str, "/static/"),
     CORS_ORIGIN_WHITELIST=(list, []),
     CACHE_LOCATION=(str, "127.0.0.1:11211"),
+    TOKEN_SECRET=(str, None),
 )
 # WARN about env file not being preset. Here we pre-empt it.
 env_file_path = os.path.join(BASE_DIR, CONFIG_FILE_NAME)
@@ -98,6 +99,7 @@ CORS_ORIGIN_WHITELIST = env("CORS_ORIGIN_WHITELIST")
 CSRF_TRUSTED_ORIGINS = ["http://localhost:8080"]
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None
+TOKEN_SECRET = env("TOKEN_SECRET")
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
