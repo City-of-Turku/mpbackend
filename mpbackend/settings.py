@@ -213,8 +213,19 @@ LOGGING = {
         "timestamped_named": {
             "format": "%(asctime)s %(name)s %(levelname)s: %(message)s",
         },
+        "normal": {
+            "format": "%(asctime)s %(levelname)s %(name)s %(thread)d %(lineno)s %(message)s"
+        },
     },
     "handlers": {
+        "file_logger": {
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": "django_debug.log",
+            "maxBytes": 1024 * 1024 * 5,
+            "backupCount": 10,
+            "formatter": "normal",
+        },
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "timestamped_named",
@@ -223,8 +234,8 @@ LOGGING = {
         "blackhole": {"class": "logging.NullHandler"},
     },
     "loggers": {
-        "django": {"handlers": ["console"], "level": "INFO"},
-        "profiles": {"handlers": ["console"], "level": "DEBUG"},
+        "django": {"handlers": ["console", "file_logger"], "level": "WARNING"},
+        "profiles": {"handlers": ["console", "file_logger"], "level": "WARNING"},
         "django.security.DisallowedHost": {
             "handlers": ["console"],
             "level": "DEBUG",
