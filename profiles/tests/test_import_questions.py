@@ -42,11 +42,11 @@ def test_import_questions():
     assert "Kauris" in results_qs[4].value_fi
     assert "Hjort" in results_qs[4].value_sv
     assert "Deer" in results_qs[4].value_en
-    assert results_qs[0].num_options == 38
-    assert results_qs[1].num_options == 29
-    assert results_qs[2].num_options == 32
+    assert results_qs[0].num_options == 39
+    assert results_qs[1].num_options == 45
+    assert results_qs[2].num_options == 39
     assert results_qs[3].num_options == 39
-    assert results_qs[4].num_options == 53
+    assert results_qs[4].num_options == 57
     assert results_qs[5].num_options == 61
 
     # Test questions
@@ -99,6 +99,15 @@ def test_import_questions():
     assert option_saa_results[0].topic_fi == "Joukkoliikenteen käyttäjä"
     assert option_saa_results[1].topic_sv == "MaaS-resenär"
     assert option_saa_results[2].topic_en == "Conscious traveler"
+
+    question10 = Question.objects.get(number="10")
+    option_joka_kerta = Option.objects.get(question=question10, order_number=0)
+    option_joka_kerta_results = option_joka_kerta.results.all()
+    assert option_joka_kerta_results.count() == 4
+    assert "Autoilija" in option_joka_kerta_results[0].topic_fi
+    assert "Tavan mukaan" in option_joka_kerta_results[1].topic_fi
+    assert "Maas" in option_joka_kerta_results[2].topic_fi
+    assert "Valveutunut" in option_joka_kerta_results[3].topic_fi
 
     # Test SubQuestion conditions
     sub_question_condition = SubQuestionCondition.objects.get(
