@@ -158,7 +158,11 @@ def test_import_questions():
 
     # Test that rows are preserved and duplicates are not generated
     import_command()
-    assert Result.objects.count() == 6
+    results_qs = Result.objects.all()
+    assert results_qs.count() == 6
+    assert results_qs[0].num_options == 39
+    assert results_qs[5].num_options == 61
+
     assert Question.objects.count() == 17
     assert QuestionCondition.objects.all().count() == 9
 
