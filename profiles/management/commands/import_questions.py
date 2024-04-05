@@ -300,11 +300,14 @@ def save_questions(excel_data: pd.DataFrame, results: list):
 
             option_order_number += 1
             save_translated_field(option, "value", get_language_dict(val_str))
+            option.results.clear()
             for a_i, a_c in enumerate(RESULT_COLUMNS):
                 if row_data[a_c] == IS_ANIMAL:
                     option.results.add(results[a_i])
+
             if option.id in options_to_delete:
                 options_to_delete.remove(option.id)
+
     Question.objects.filter(id__in=questions_to_delete).delete()
     Option.objects.filter(id__in=options_to_delete).delete()
     SubQuestionCondition.objects.filter(
