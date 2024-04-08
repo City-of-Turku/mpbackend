@@ -56,7 +56,7 @@ from profiles.models import (
 )
 from profiles.utils import encrypt_text, generate_password, get_user_result
 
-from .utils import PostalCodeResultFilter
+from .utils import PostalCodeResultFilter, StartPollRateThrottle
 
 logger = logging.getLogger(__name__)
 
@@ -185,6 +185,7 @@ class QuestionViewSet(viewsets.ReadOnlyModelViewSet):
         detail=False,
         methods=["POST"],
         permission_classes=[AllowAny],
+        throttle_classes=[StartPollRateThrottle],
     )
     def start_poll(self, request):
         uuid4 = uuid.uuid4()
