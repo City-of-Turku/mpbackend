@@ -7,6 +7,7 @@ from django.utils import timezone
 from freezegun import freeze_time
 from rest_framework.reverse import reverse
 
+from account.api.views import ProfileViewSet
 from account.models import MailingList, MailingListEmail, User
 from profiles.models import PostalCode, PostalCodeResult
 
@@ -48,7 +49,10 @@ def test_unauthenticated_cannot_do_anything(api_client, users):
 def test_mailing_list_unsubscribe_throttling(
     api_client_with_custom_ip_address, mailing_list_emails
 ):
-    num_requests = 10
+    # Set number of requests to be made from the rate. The rate is stored as a string, e.g., rate = "10/day"
+    num_requests = int(
+        ProfileViewSet.unsubscribe.kwargs["throttle_classes"][0].rate.split("/")[0]
+    )
     url = reverse("account:profiles-unsubscribe")
     count = 0
     while count < num_requests:
