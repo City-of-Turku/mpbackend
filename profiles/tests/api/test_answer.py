@@ -1,8 +1,11 @@
+import time
+
 import pytest
 from rest_framework.authtoken.models import Token
 from rest_framework.reverse import reverse
 
 from account.models import User
+from profiles.api.views import QuestionViewSet
 from profiles.models import Answer, Option, Question, SubQuestion
 
 
@@ -19,6 +22,29 @@ def test_start_poll(api_client):
     response = api_client.post(url)
     assert response.status_code == 200
     assert User.objects.all().count() == 1
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "ip_address",
+    [
+        ("240.231.131.14"),
+    ],
+)
+def test_start_poll_throttling(api_client_with_custom_ip_address):
+    # Set number of requests to be made from the rate. The rate is stored as a string, e.g., rate = "10/day"
+    num_requests = int(
+        QuestionViewSet.start_poll.kwargs["throttle_classes"][0].rate.split("/")[0]
+    )
+    url = reverse("profiles:question-start-poll")
+    count = 0
+    while count < num_requests:
+        response = api_client_with_custom_ip_address.post(url)
+        assert response.status_code == 200
+        count += 1
+    time.sleep(2)
+    response = api_client_with_custom_ip_address.post(url)
+    assert response.status_code == 429
 
 
 @pytest.mark.django_db
