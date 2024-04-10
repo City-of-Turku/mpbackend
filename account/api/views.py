@@ -9,16 +9,15 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 
-from account.models import MailingList, MailingListEmail, Profile
+from account.models import MailingList, MailingListEmail, Profile, User
 from profiles.api.views import update_postal_code_result
-from profiles.models import Result
 
 from .serializers import ProfileSerializer, SubscribeSerializer, UnSubscribeSerializer
 
 all_views = []
 
 
-class UnsubscribeRateThrottle(AnonRateThrottle):
+class MailRateThrottle(AnonRateThrottle):
     """
     The AnonRateThrottle will only ever throttle unauthenticated users.
     The IP address of the incoming request is used to generate a unique key to throttle against.
@@ -32,7 +31,7 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
     serializer_class = ProfileSerializer
 
     def get_permissions(self):
-        if self.action in ["unsubscribe"]:
+        if self.action in ["unsubscribe", "subscribe"]:
             permission_classes = [AllowAny]
         else:
             permission_classes = [IsAuthenticated]
@@ -74,11 +73,16 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
     @action(
         detail=False,
         methods=["POST"],
-        permission_classes=[IsAuthenticated],
+        permission_classes=[AllowAny],
+        throttle_classes=[MailRateThrottle],
     )
     @db.transaction.atomic
     def subscribe(self, request):
-        result = Result.objects.filter(id=request.data.get("result", None)).first()
+        user = User.objects.filter(id=request.data.get("user", None)).first()
+        if not user:
+            return Response("invalid request", status=status.HTTP_400_BAD_REQUEST)
+
+        result = user.result
         if not result:
             return Response("'result' not found", status=status.HTTP_400_BAD_REQUEST)
 
@@ -101,7 +105,7 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
 
     @extend_schema(
         description="Unaubscribe the email from the mailing list attached to the result."
-        f"Note, there is a rate-limit of {UnsubscribeRateThrottle.rate} requests.",
+        f"Note, there is a rate-limit of {MailRateThrottle.rate} requests.",
         request=UnSubscribeSerializer,
         responses={
             200: OpenApiResponse(description="unsubscribed"),
@@ -114,7 +118,7 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
         detail=False,
         methods=["POST"],
         permission_classes=[AllowAny],
-        throttle_classes=[UnsubscribeRateThrottle],
+        throttle_classes=[MailRateThrottle],
     )
     def unsubscribe(self, request):
         email = request.data.get("email", None)
