@@ -16,10 +16,16 @@ def test_answer_post_unauthenticated(api_client):
 
 
 @pytest.mark.django_db
-def test_start_poll(api_client):
+@pytest.mark.parametrize(
+    "ip_address",
+    [
+        ("28.18.23.111"),
+    ],
+)
+def test_start_poll(api_client_with_custom_ip_address):
     User.objects.all().count() == 0
     url = reverse("profiles:question-start-poll")
-    response = api_client.post(url)
+    response = api_client_with_custom_ip_address.post(url)
     assert response.status_code == 200
     assert User.objects.all().count() == 1
 
