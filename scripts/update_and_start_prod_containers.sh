@@ -9,6 +9,6 @@ docker system prune -a -f
 docker volume rm mpbackend_static
 docker volume rm mpbackend_mpbackend
 
-docker-compose -f ../docker-compose.yml -f ../docker-compose.prod.yml up  --build
+docker-compose -f ../docker-compose.yml -f ../docker-compose.prod.yml up --build
 docker-compose -f ../docker-compose.yml -f ../docker-compose.prod.yml start
 
