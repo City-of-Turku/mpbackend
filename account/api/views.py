@@ -80,7 +80,11 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
     def subscribe(self, request):
         user = User.objects.filter(id=request.data.get("user", None)).first()
         if not user:
-            return Response("invalid request", status=status.HTTP_400_BAD_REQUEST)
+            return Response("Invalid request", status=status.HTTP_400_BAD_REQUEST)
+        if user.has_subscribed:
+            return Response(
+                "The user has already subscribed", status=status.HTTP_400_BAD_REQUEST
+            )
 
         result = user.result
         if not result:
@@ -101,6 +105,8 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
             mailing_list = MailingList.objects.create(result=result)
 
         MailingListEmail.objects.create(mailing_list=mailing_list, email=email)
+        user.has_subscribed = True
+        user.save()
         return Response("subscribed", status=status.HTTP_201_CREATED)
 
     @extend_schema(
