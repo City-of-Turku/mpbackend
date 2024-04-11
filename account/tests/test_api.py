@@ -43,7 +43,7 @@ def test_unauthenticated_cannot_do_anything(api_client, users):
 @pytest.mark.parametrize(
     "ip_address",
     [
-        ("192.168.1.40"),
+        ("199.168.1.40"),
     ],
 )
 def test_mailing_list_unsubscribe_throttling(
@@ -227,18 +227,31 @@ def test_profile_patch_result_can_be_used(api_client_authenticated, users, profi
 
 
 @pytest.mark.django_db
-def test_mailing_list_subscribe(api_client, users, results, mailing_lists):
+def test_mailing_list_subscribe(api_client, users, results):
+    url = reverse("account:profiles-subscribe")
+    user = users.get(username="test1")
+    response = api_client.post(url, {"email": "test@test.com", "user": user.id})
+    assert response.status_code == 201
+    assert MailingListEmail.objects.count() == 1
+    assert MailingListEmail.objects.first().email == "test@test.com"
+    assert (
+        MailingList.objects.filter(result=user.result).first().emails.first()
+        == MailingListEmail.objects.first()
+    )
+    assert MailingList.objects.first().result == user.result
+
+
+@pytest.mark.django_db
+def test_mailing_user_has_subscribed(api_client, users, results, mailing_lists):
     url = reverse("account:profiles-subscribe")
     response = api_client.post(
         url, {"email": "test@test.com", "user": users.first().id}
     )
     assert response.status_code == 201
-    assert MailingListEmail.objects.count() == 1
-    assert MailingListEmail.objects.first().email == "test@test.com"
-    assert (
-        MailingList.objects.first().emails.first() == MailingListEmail.objects.first()
+    response = api_client.post(
+        url, {"email": "test@test.com", "user": users.first().id}
     )
-    assert MailingList.objects.first().result == users.first().result
+    assert response.status_code == 400
 
 
 @pytest.mark.django_db
@@ -261,7 +274,7 @@ def test_mailing_list_subscribe_throttling(
             url,
             {
                 "email": f"throttlling_test_{count}@test.com",
-                "user": users.first().id,
+                "user": users[count].id,
             },
         )
         assert response.status_code == 201
@@ -269,7 +282,7 @@ def test_mailing_list_subscribe_throttling(
 
     time.sleep(2)
     response = api_client_with_custom_ip_address.post(
-        url, {"email": f"test_{count}@test.com"}
+        url, {"email": f"test_{count}@test.com", "user": users[count].id}
     )
     assert response.status_code == 429
 
@@ -319,24 +332,43 @@ def test_mailing_list_subscribe_with_invalid_post_data(
 
 
 @pytest.mark.django_db
-def test_mailing_list_unsubscribe(api_client, mailing_list_emails):
+@pytest.mark.parametrize(
+    "ip_address",
+    [
+        ("100.1.1.40"),
+    ],
+)
+def test_mailing_list_unsubscribe(
+    api_client_with_custom_ip_address, mailing_list_emails
+):
     num_mailing_list_emails = mailing_list_emails.count()
     assert MailingListEmail.objects.count() == num_mailing_list_emails
     assert MailingList.objects.first().emails.count() == num_mailing_list_emails
     url = reverse("account:profiles-unsubscribe")
-    response = api_client.post(url, {"email": "test_0@test.com"})
+    response = api_client_with_custom_ip_address.post(url, {"email": "test_0@test.com"})
     assert response.status_code == 200
     assert MailingListEmail.objects.count() == num_mailing_list_emails - 1
     assert MailingList.objects.first().emails.count() == num_mailing_list_emails - 1
 
 
 @pytest.mark.django_db
-def test_mailing_list_unsubscribe_non_existing_email(api_client, mailing_list_emails):
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "ip_address",
+    [
+        ("101.1.1.40"),
+    ],
+)
+def test_mailing_list_unsubscribe_non_existing_email(
+    api_client_with_custom_ip_address, mailing_list_emails
+):
     num_mailing_list_emails = mailing_list_emails.count()
     assert MailingListEmail.objects.count() == num_mailing_list_emails
     assert MailingList.objects.first().emails.count() == num_mailing_list_emails
     url = reverse("account:profiles-unsubscribe")
-    response = api_client.post(url, {"email": "idonotexist@test.com"})
+    response = api_client_with_custom_ip_address.post(
+        url, {"email": "idonotexist@test.com"}
+    )
     assert response.status_code == 400
     assert MailingListEmail.objects.count() == num_mailing_list_emails
     assert MailingList.objects.first().emails.count() == num_mailing_list_emails
