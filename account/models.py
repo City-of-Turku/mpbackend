@@ -20,6 +20,7 @@ class User(AbstractUser):
     email_verified = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_generated = models.BooleanField(default=False)
+    has_subscribed = models.BooleanField(default=False)
     # Flag that is used to ensure the user is only Once calculated to the PostalCodeResults model.
     postal_code_result_saved = models.BooleanField(default=False)
 
