@@ -8,6 +8,8 @@ docker exec -i mpbackend_postgres_1 /usr/bin/pg_dump -U mobilityprofile -F t mob
 echo "Backup finished."
 
 : 'To restore:
+To enter psql:
+docker exec -it  mpbackend_postgres_1 psql -U mobilityprofile mobilityprofile
 To inspect the container:
 docker inspect mpbackend_postgres_1
 
