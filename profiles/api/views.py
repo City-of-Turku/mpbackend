@@ -115,11 +115,7 @@ def question_condition_met(question_condition_qs, user):
 def update_postal_code_result(user):
     # Ensure that duplicate results are not saved, profiles filled for fun and profiles whos result
     # can not be used are ignored.
-    if (
-        user.postal_code_result_saved
-        or user.profile.is_filled_for_fun
-        or not user.profile.result_can_be_used
-    ):
+    if user.postal_code_result_saved or not user.profile.result_can_be_used:
         return
     if user.result:
         result = user.result

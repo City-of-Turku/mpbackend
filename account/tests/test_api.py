@@ -123,7 +123,6 @@ def test_profile_put(api_client_authenticated, users, profiles):
     user = users.get(username="test1")
     url = reverse("account:profiles-detail", args=[user.id])
     assert user.profile.is_interested_in_mobility is False
-    assert user.profile.is_filled_for_fun is False
     assert user.profile.gender is None
     assert user.profile.postal_code is None
     assert user.profile.optional_postal_code is None
@@ -133,14 +132,12 @@ def test_profile_put(api_client_authenticated, users, profiles):
         "optional_postal_code": "20220",
         "is_interested_in_mobility": True,
         "gender": "F",
-        "is_filled_for_fun": True,
         "result_can_be_used": False,
     }
     response = api_client_authenticated.put(url, data)
     assert response.status_code == 200
     user.refresh_from_db()
     assert user.profile.is_interested_in_mobility is True
-    assert user.profile.is_filled_for_fun is True
     assert user.profile.gender == "F"
     assert user.profile.postal_code == "20210"
     assert user.profile.optional_postal_code == "20220"
@@ -204,16 +201,6 @@ def test_profile_patch_year_of_birth(api_client_authenticated, users, profiles):
     patch(api_client_authenticated, url, {"year_of_birth": 42})
     user.refresh_from_db()
     assert user.profile.year_of_birth == 42
-
-
-@pytest.mark.django_db
-def test_profile_patch_is_filled_for_fun(api_client_authenticated, users, profiles):
-    user = users.get(username="test1")
-    url = reverse("account:profiles-detail", args=[user.id])
-    assert user.profile.is_filled_for_fun is False
-    patch(api_client_authenticated, url, {"is_filled_for_fun": True})
-    user.refresh_from_db()
-    assert user.profile.is_filled_for_fun is True
 
 
 @pytest.mark.django_db
