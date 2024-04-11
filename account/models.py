@@ -46,7 +46,6 @@ class Profile(models.Model):
     year_of_birth = models.PositiveSmallIntegerField(null=True, blank=True)
     postal_code = models.CharField(max_length=10, null=True)
     optional_postal_code = models.CharField(max_length=10, null=True)
-    is_filled_for_fun = models.BooleanField(default=False)
     is_interested_in_mobility = models.BooleanField(default=False)
     result_can_be_used = models.BooleanField(default=True)
     gender = models.CharField(
