@@ -43,7 +43,7 @@ def test_unauthenticated_cannot_do_anything(api_client, users):
 @pytest.mark.parametrize(
     "ip_address",
     [
-        ("192.168.1.40"),
+        ("199.168.1.40"),
     ],
 )
 def test_mailing_list_unsubscribe_throttling(
@@ -123,7 +123,6 @@ def test_profile_put(api_client_authenticated, users, profiles):
     user = users.get(username="test1")
     url = reverse("account:profiles-detail", args=[user.id])
     assert user.profile.is_interested_in_mobility is False
-    assert user.profile.is_filled_for_fun is False
     assert user.profile.gender is None
     assert user.profile.postal_code is None
     assert user.profile.optional_postal_code is None
@@ -133,14 +132,12 @@ def test_profile_put(api_client_authenticated, users, profiles):
         "optional_postal_code": "20220",
         "is_interested_in_mobility": True,
         "gender": "F",
-        "is_filled_for_fun": True,
         "result_can_be_used": False,
     }
     response = api_client_authenticated.put(url, data)
     assert response.status_code == 200
     user.refresh_from_db()
     assert user.profile.is_interested_in_mobility is True
-    assert user.profile.is_filled_for_fun is True
     assert user.profile.gender == "F"
     assert user.profile.postal_code == "20210"
     assert user.profile.optional_postal_code == "20220"
@@ -207,16 +204,6 @@ def test_profile_patch_year_of_birth(api_client_authenticated, users, profiles):
 
 
 @pytest.mark.django_db
-def test_profile_patch_is_filled_for_fun(api_client_authenticated, users, profiles):
-    user = users.get(username="test1")
-    url = reverse("account:profiles-detail", args=[user.id])
-    assert user.profile.is_filled_for_fun is False
-    patch(api_client_authenticated, url, {"is_filled_for_fun": True})
-    user.refresh_from_db()
-    assert user.profile.is_filled_for_fun is True
-
-
-@pytest.mark.django_db
 def test_profile_patch_result_can_be_used(api_client_authenticated, users, profiles):
     user = users.get(username="test1")
     url = reverse("account:profiles-detail", args=[user.id])
@@ -227,36 +214,72 @@ def test_profile_patch_result_can_be_used(api_client_authenticated, users, profi
 
 
 @pytest.mark.django_db
-def test_mailing_list_unauthenticated_subscribe(api_client, results):
+def test_mailing_list_subscribe(api_client, users, results):
     url = reverse("account:profiles-subscribe")
-    response = api_client.post(
-        url, {"email": "test@test.com", "result": results.first().id}
-    )
-    assert response.status_code == 401
-
-
-@pytest.mark.django_db
-def test_mailing_list_subscribe(
-    api_client_authenticated, users, results, mailing_lists
-):
-    url = reverse("account:profiles-subscribe")
-    response = api_client_authenticated.post(
-        url, {"email": "test@test.com", "result": results.first().id}
-    )
+    user = users.get(username="test1")
+    response = api_client.post(url, {"email": "test@test.com", "user": user.id})
     assert response.status_code == 201
     assert MailingListEmail.objects.count() == 1
     assert MailingListEmail.objects.first().email == "test@test.com"
     assert (
-        MailingList.objects.first().emails.first() == MailingListEmail.objects.first()
+        MailingList.objects.filter(result=user.result).first().emails.first()
+        == MailingListEmail.objects.first()
     )
+    assert MailingList.objects.first().result == user.result
 
 
 @pytest.mark.django_db
-def test_mailing_list_is_created_on_subscribe(api_client_authenticated, users, results):
+def test_mailing_user_has_subscribed(api_client, users, results, mailing_lists):
+    url = reverse("account:profiles-subscribe")
+    response = api_client.post(
+        url, {"email": "test@test.com", "user": users.first().id}
+    )
+    assert response.status_code == 201
+    response = api_client.post(
+        url, {"email": "test@test.com", "user": users.first().id}
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "ip_address",
+    [
+        ("92.68.21.220"),
+    ],
+)
+def test_mailing_list_subscribe_throttling(
+    api_client_with_custom_ip_address, mailing_list_emails, users
+):
+    num_requests = int(
+        ProfileViewSet.subscribe.kwargs["throttle_classes"][0].rate.split("/")[0]
+    )
+    url = reverse("account:profiles-subscribe")
+    count = 0
+    while count < num_requests:
+        response = api_client_with_custom_ip_address.post(
+            url,
+            {
+                "email": f"throttlling_test_{count}@test.com",
+                "user": users[count].id,
+            },
+        )
+        assert response.status_code == 201
+        count += 1
+
+    time.sleep(2)
+    response = api_client_with_custom_ip_address.post(
+        url, {"email": f"test_{count}@test.com", "user": users[count].id}
+    )
+    assert response.status_code == 429
+
+
+@pytest.mark.django_db
+def test_mailing_list_is_created_on_subscribe(api_client, users, results):
     assert MailingList.objects.count() == 0
     url = reverse("account:profiles-subscribe")
-    response = api_client_authenticated.post(
-        url, {"email": "test@test.com", "result": results.first().id}
+    response = api_client.post(
+        url, {"email": "test@test.com", "user": users.first().id}
     )
     assert response.status_code == 201
     assert MailingList.objects.count() == 1
@@ -264,9 +287,7 @@ def test_mailing_list_is_created_on_subscribe(api_client_authenticated, users, r
 
 
 @pytest.mark.django_db
-def test_mailing_list_subscribe_with_invalid_emails(
-    api_client_authenticated, users, results
-):
+def test_mailing_list_subscribe_with_invalid_emails(api_client, users, results):
     assert MailingList.objects.count() == 0
     url = reverse("account:profiles-subscribe")
     for email in [
@@ -276,9 +297,7 @@ def test_mailing_list_subscribe_with_invalid_emails(
         "john.doe@example",
         "john.doe@example",
     ]:
-        response = api_client_authenticated.post(
-            url, {"email": email, "result": results.first().id}
-        )
+        response = api_client.post(url, {"email": email, "user": users.first().id})
         assert response.status_code == 400
         assert MailingList.objects.count() == 0
         assert MailingList.objects.count() == 0
@@ -290,43 +309,68 @@ def test_mailing_list_subscribe_with_invalid_post_data(
 ):
     url = reverse("account:profiles-subscribe")
     # Missing email
-    response = api_client_authenticated.post(url, {"result": results.first().id})
+    response = api_client_authenticated.post(url, {"user": users.first().id})
     assert response.status_code == 400
-    assert MailingList.objects.count() == 0
     assert MailingList.objects.count() == 0
     # Missing result
     response = api_client_authenticated.post(url, {"email": "test@test.com"})
     assert response.status_code == 400
     assert MailingList.objects.count() == 0
-    assert MailingList.objects.count() == 0
 
 
 @pytest.mark.django_db
-def test_mailing_list_unsubscribe(api_client, mailing_list_emails):
+@pytest.mark.parametrize(
+    "ip_address",
+    [
+        ("100.1.1.40"),
+    ],
+)
+def test_mailing_list_unsubscribe(
+    api_client_with_custom_ip_address, mailing_list_emails
+):
     num_mailing_list_emails = mailing_list_emails.count()
     assert MailingListEmail.objects.count() == num_mailing_list_emails
     assert MailingList.objects.first().emails.count() == num_mailing_list_emails
     url = reverse("account:profiles-unsubscribe")
-    response = api_client.post(url, {"email": "test_0@test.com"})
+    response = api_client_with_custom_ip_address.post(url, {"email": "test_0@test.com"})
     assert response.status_code == 200
     assert MailingListEmail.objects.count() == num_mailing_list_emails - 1
     assert MailingList.objects.first().emails.count() == num_mailing_list_emails - 1
 
 
 @pytest.mark.django_db
-def test_mailing_list_unsubscribe_non_existing_email(api_client, mailing_list_emails):
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "ip_address",
+    [
+        ("101.1.1.40"),
+    ],
+)
+def test_mailing_list_unsubscribe_non_existing_email(
+    api_client_with_custom_ip_address, mailing_list_emails
+):
     num_mailing_list_emails = mailing_list_emails.count()
     assert MailingListEmail.objects.count() == num_mailing_list_emails
     assert MailingList.objects.first().emails.count() == num_mailing_list_emails
     url = reverse("account:profiles-unsubscribe")
-    response = api_client.post(url, {"email": "idonotexist@test.com"})
+    response = api_client_with_custom_ip_address.post(
+        url, {"email": "idonotexist@test.com"}
+    )
     assert response.status_code == 400
     assert MailingListEmail.objects.count() == num_mailing_list_emails
     assert MailingList.objects.first().emails.count() == num_mailing_list_emails
 
 
 @pytest.mark.django_db
-def test_mailing_list_unsubscribe_email_not_provided(api_client, mailing_list_emails):
+@pytest.mark.parametrize(
+    "ip_address",
+    [
+        ("12.6.121.22"),
+    ],
+)
+def test_mailing_list_unsubscribe_email_not_provided(
+    api_client_with_custom_ip_address, mailing_list_emails
+):
     url = reverse("account:profiles-unsubscribe")
-    response = api_client.post(url)
+    response = api_client_with_custom_ip_address.post(url)
     assert response.status_code == 400

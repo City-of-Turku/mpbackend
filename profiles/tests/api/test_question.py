@@ -375,29 +375,6 @@ def test_get_question_by_numbers(api_client, questions):
 
 
 @pytest.mark.django_db
-def test_result_count_is_filled_for_fun_is_false(
-    api_client_authenticated, answers, users
-):
-    user = users.get(username="test1")
-    assert user.profile.is_filled_for_fun is False
-    url = reverse("profiles:question-end-poll")
-    response = api_client_authenticated.post(url)
-    assert response.status_code == 200
-    assert PostalCodeResult.objects.count() == 2
-
-
-@pytest.mark.django_db
-def test_result_count_is_filled_for_fun_is_true(api_client_authenticated, users):
-    user = users.get(username="test1")
-    url = reverse("profiles:question-end-poll")
-    user.profile.is_filled_for_fun = True
-    user.profile.save()
-    response = api_client_authenticated.post(url)
-    assert response.status_code == 200
-    assert PostalCodeResult.objects.count() == 0
-
-
-@pytest.mark.django_db
 def test_result_count_result_can_be_used_is_true(
     api_client_authenticated, users, answers
 ):
