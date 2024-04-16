@@ -1,7 +1,6 @@
 import csv
 
 from django.contrib import admin
-from django.db.models import Sum
 from django.http import HttpResponse
 
 from profiles.models import (
@@ -232,32 +231,23 @@ class CumulativeResultCountAdmin(
 
     list_display = ("value", "topic", "sum_of_count", "selected_postal_code_type")
     actions = ["home_postal_code_type", "optional_postal_code_type"]
-    postal_code_type = PostalCodeType.objects.get(
-        type_name=PostalCodeType.HOME_POSTAL_CODE
-    )
+    postal_code_type_name = PostalCodeType.HOME_POSTAL_CODE
 
     def home_postal_code_type(self, request, queryset):
-        self.postal_code_type = PostalCodeType.objects.get(
-            type_name=PostalCodeType.HOME_POSTAL_CODE
-        )
+        self.postal_code_type_name = PostalCodeType.HOME_POSTAL_CODE
 
     home_postal_code_type.acts_on_all = True
 
     def optional_postal_code_type(self, request, queryset):
-        self.postal_code_type = PostalCodeType.objects.get(
-            type_name=PostalCodeType.OPTIONAL_POSTAL_CODE
-        )
+        self.postal_code_type_name = PostalCodeType.OPTIONAL_POSTAL_CODE
 
     optional_postal_code_type.acts_on_all = True
 
     def selected_postal_code_type(self, obj):
-        return self.postal_code_type.type_name
+        return self.postal_code_type_name
 
     def sum_of_count(self, obj):
-        qs = PostalCodeResult.objects.filter(
-            postal_code_type=self.postal_code_type, result=obj
-        )
-        return qs.aggregate(sum_of_count=Sum("count"))["sum_of_count"]
+        return obj.get_sum_of_count(self.postal_code_type_name)
 
     class Meta:
         model = CumulativeResultCount
