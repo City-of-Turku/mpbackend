@@ -219,3 +219,8 @@ class PostalCodeResult(models.Model):
             return f"{self.postal_code_type} postal_code: {self.postal_code}, count: {self.count}"
         else:
             return f"count: {self.count}"
+
+
+class CumulativeResultCount(Result):
+    class Meta:
+        proxy = True
