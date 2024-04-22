@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from profiles.models import (
     Answer,
     AnswerOther,
+    CumulativeResultCount,
     Option,
     PostalCode,
     PostalCodeResult,
@@ -200,6 +201,56 @@ class PostalCodeResultAdmin(
 
     class Meta:
         model = PostalCodeResult
+
+
+@admin.register(CumulativeResultCount)
+class CumulativeResultCountAdmin(
+    DisableDeleteAdminMixin,
+    DisableChangeAdminMixin,
+    DisableAddAdminMixin,
+    admin.ModelAdmin,
+):
+    # Admin view that displays the sum of the counts for Home or Optional postal code results for every result (animal).
+
+    def changelist_view(self, request, extra_context=None):
+        # Choose all rows, when selecting action.
+        try:
+            action = self.get_actions(request)[request.POST["action"]][0]
+            action_acts_on_all = action.acts_on_all
+        except (KeyError, AttributeError):
+            action_acts_on_all = False
+        if action_acts_on_all:
+            post = request.POST.copy()
+            post.setlist(
+                admin.helpers.ACTION_CHECKBOX_NAME,
+                self.model.objects.values_list("id", flat=True),
+            )
+            request.POST = post
+
+        return admin.ModelAdmin.changelist_view(self, request, extra_context)
+
+    list_display = ("value", "topic", "sum_of_count", "selected_postal_code_type")
+    actions = ["home_postal_code_type", "optional_postal_code_type"]
+    postal_code_type_name = PostalCodeType.HOME_POSTAL_CODE
+
+    def home_postal_code_type(self, request, queryset):
+        self.postal_code_type_name = PostalCodeType.HOME_POSTAL_CODE
+
+    home_postal_code_type.acts_on_all = True
+
+    def optional_postal_code_type(self, request, queryset):
+        self.postal_code_type_name = PostalCodeType.OPTIONAL_POSTAL_CODE
+
+    optional_postal_code_type.acts_on_all = True
+
+    def selected_postal_code_type(self, obj):
+        return self.postal_code_type_name
+
+    def sum_of_count(self, obj):
+        return obj.get_sum_of_count(self.postal_code_type_name)
+
+    class Meta:
+        model = CumulativeResultCount
 
 
 admin.site.register(Question, QuestionAdmin)

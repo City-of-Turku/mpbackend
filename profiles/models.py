@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Sum
 
 
 class Question(models.Model):
@@ -219,3 +220,15 @@ class PostalCodeResult(models.Model):
             return f"{self.postal_code_type} postal_code: {self.postal_code}, count: {self.count}"
         else:
             return f"count: {self.count}"
+
+
+class CumulativeResultCount(Result):
+    class Meta:
+        proxy = True
+
+    def get_sum_of_count(self, postal_code_type_name=PostalCodeType.HOME_POSTAL_CODE):
+        postal_code_type = PostalCodeType.objects.get(type_name=postal_code_type_name)
+        qs = PostalCodeResult.objects.filter(
+            postal_code_type=postal_code_type, result=self
+        )
+        return qs.aggregate(sum_of_count=Sum("count"))["sum_of_count"]
