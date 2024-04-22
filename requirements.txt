@@ -8,7 +8,7 @@ asgiref==3.6.0
     # via django
 attrs==23.1.0
     # via jsonschema
-black==23.3.0
+black==24.3.0
     # via -r requirements.in
 build==0.10.0
     # via pip-tools
@@ -126,7 +126,9 @@ tomli==2.0.1
     #   pyproject-hooks
     #   pytest
 typing-extensions==4.5.0
-    # via django-modeltranslation
+    # via
+    #   black
+    #   django-modeltranslation
 tzdata==2023.3
     # via pandas
 uritemplate==4.1.1
