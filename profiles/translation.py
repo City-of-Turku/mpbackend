@@ -1,6 +1,6 @@
 from modeltranslation.translator import TranslationOptions, translator
 
-from profiles.models import Option, Question, Result, SubQuestion
+from profiles.models import CumulativeResultCount, Option, Question, Result, SubQuestion
 
 
 class QuestionTranslationOptions(TranslationOptions):
@@ -35,3 +35,10 @@ class ResultTranslationOptions(TranslationOptions):
 
 
 translator.register(Result, ResultTranslationOptions)
+
+
+class CumulativeResultCountTranslationOptions(ResultTranslationOptions):
+    pass
+
+
+translator.register(CumulativeResultCount, CumulativeResultCountTranslationOptions)
