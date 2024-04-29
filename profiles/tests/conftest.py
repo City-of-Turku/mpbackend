@@ -7,6 +7,7 @@ from profiles.models import (
     Answer,
     Option,
     PostalCode,
+    PostalCodeResult,
     PostalCodeType,
     Question,
     QuestionCondition,
@@ -63,6 +64,24 @@ def postal_code_types():
     PostalCodeType.objects.create(type_name=PostalCodeType.HOME_POSTAL_CODE)
     PostalCodeType.objects.create(type_name=PostalCodeType.OPTIONAL_POSTAL_CODE)
     return PostalCodeType.objects.all()
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def postal_code_results(postal_codes, postal_code_types, results):
+    PostalCodeResult.objects.create(
+        postal_code=postal_codes.first(),
+        postal_code_type=postal_code_types.first(),
+        result=results.first(),
+        count=4,
+    )
+    PostalCodeResult.objects.create(
+        postal_code=postal_codes.last(),
+        postal_code_type=postal_code_types.first(),
+        result=results.first(),
+        count=2,
+    )
+    return PostalCodeResult.objects.all()
 
 
 @pytest.mark.django_db
