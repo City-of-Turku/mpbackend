@@ -4,6 +4,7 @@ DOC_ENDPOINTS = [
     "/api/v1/question/",
     "/api/v1/answer/",
     "/api/v1/postalcoderesult/",
+    "/api/v1/cumulativeresult/",
     "/api/account/",
 ]
 

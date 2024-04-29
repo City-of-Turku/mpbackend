@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from profiles.models import (
     Answer,
+    CumulativeResultCount,
     Option,
     PostalCode,
     PostalCodeResult,
@@ -149,3 +150,17 @@ class PostalCodeTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = PostalCodeType
         fields = "__all__"
+
+
+class CumulativeResultSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CumulativeResultCount
+        fields = "__all__"
+
+    def to_representation(self, instance):
+        type_name = self.context.get("type_name")
+        representation = super().to_representation(instance)
+        representation["sum_of_count"] = instance.get_sum_of_count(
+            postal_code_type_name=type_name
+        )
+        return representation
