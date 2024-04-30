@@ -2,6 +2,7 @@ import pytest
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
+from account.api.views import ProfileViewSet
 from account.models import MailingList, MailingListEmail, Profile, User
 from profiles.models import Result
 
@@ -29,7 +30,20 @@ def api_client_with_custom_ip_address(ip_address):
 def users(results):
     [
         User.objects.create(username=f"test{i}", result=results[i % results.count()])
-        for i in range(20)
+        for i in range(4)
+    ]
+    return User.objects.all()
+
+
+@pytest.fixture
+def throttling_users(results):
+    num_users = (
+        int(ProfileViewSet.unsubscribe.kwargs["throttle_classes"][0].rate.split("/")[0])
+        + 2
+    )
+    [
+        User.objects.create(username=f"t_test{i}", result=results[i % results.count()])
+        for i in range(num_users)
     ]
     return User.objects.all()
 
@@ -60,6 +74,6 @@ def mailing_list_emails(mailing_lists):
         MailingListEmail.objects.create(
             email=f"test_{c}@test.com", mailing_list=mailing_lists.first()
         )
-        for c in range(20)
+        for c in range(52)
     ]
     return MailingListEmail.objects.all()
