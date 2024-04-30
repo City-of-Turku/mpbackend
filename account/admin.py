@@ -35,7 +35,7 @@ class MailingListAdminForm(forms.ModelForm):
 
 
 class MailingListAdmin(DisableDeleteAdminMixin, DisableAddAdminMixin, admin.ModelAdmin):
-    list_display = ("result", "csv_emails")
+    list_display = ("result", "number_of_emails")
 
     readonly_fields = ("result",)
     form = MailingListAdminForm

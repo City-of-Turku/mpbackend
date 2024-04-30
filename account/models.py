@@ -72,6 +72,9 @@ class MailingList(models.Model):
     def csv_emails(self):
         return ",".join([e.email for e in self.emails.all()])
 
+    def number_of_emails(self):
+        return self.emails.count()
+
 
 class MailingListEmail(models.Model):
     email = models.EmailField()
