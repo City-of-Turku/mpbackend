@@ -74,10 +74,18 @@ class MailingList(models.Model):
 
 
 class MailingListEmail(models.Model):
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
     mailing_list = models.ForeignKey(
         MailingList, related_name="emails", on_delete=models.CASCADE
     )
 
     def __str__(self):
-        return self.email
+        return f"{self.email} {self.mailing_list}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["email", "mailing_list"],
+                name="email_and_mailing_list_must_be_jointly:unique",
+            )
+        ]
