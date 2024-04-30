@@ -24,7 +24,7 @@ class MailRateThrottle(AnonRateThrottle):
     The IP address of the incoming request is used to generate a unique key to throttle against.
     """
 
-    rate = "10/day"
+    rate = "50/day"
 
 
 class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
