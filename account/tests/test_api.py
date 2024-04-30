@@ -374,3 +374,34 @@ def test_mailing_list_unsubscribe_email_not_provided(
     url = reverse("account:profiles-unsubscribe")
     response = api_client_with_custom_ip_address.post(url)
     assert response.status_code == 400
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "ip_address",
+    [
+        ("100.19.91.40"),
+    ],
+)
+def test_mailing_list_unique_constraints(api_client_with_custom_ip_address, users):
+    url = reverse("account:profiles-subscribe")
+    user = users.get(username="test1")
+    response = api_client_with_custom_ip_address.post(
+        url, {"email": "test@test.com", "user": user.id}
+    )
+    assert response.status_code == 201
+    assert MailingListEmail.objects.count() == 1
+    # Subscribed as the result (MailingList) is different than for user 'test1'
+    user = users.get(username="test2")
+    response = api_client_with_custom_ip_address.post(
+        url, {"email": "test@test.com", "user": user.id}
+    )
+    assert response.status_code == 201
+    assert MailingListEmail.objects.count() == 2
+    # Fails, as the email and result are not jointly unique.
+    user = users.get(username="test3")
+    response = api_client_with_custom_ip_address.post(
+        url, {"email": "test@test.com", "user": user.id}
+    )
+    assert response.status_code == 400
+    assert MailingListEmail.objects.count() == 2
