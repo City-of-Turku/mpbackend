@@ -17,7 +17,8 @@ from drf_spectacular.utils import (
 from rest_framework import status, viewsets
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
-from rest_framework.mixins import CreateModelMixin
+from rest_framework.exceptions import ParseError
+from rest_framework.mixins import CreateModelMixin, ListModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
@@ -27,6 +28,7 @@ from account.models import Profile, User
 from profiles.api.serializers import (
     AnswerRequestSerializer,
     AnswerSerializer,
+    CumulativeResultSerializer,
     InConditionResponseSerializer,
     OptionSerializer,
     PostalCodeResultSerializer,
@@ -44,6 +46,7 @@ from profiles.api.serializers import (
 )
 from profiles.models import (
     Answer,
+    CumulativeResultCount,
     Option,
     PostalCode,
     PostalCodeResult,
@@ -736,6 +739,44 @@ class PostalCodeViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 register_view(PostalCodeViewSet, "postalcode")
+
+
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            POSTAL_CODE_TYPE_PARAM,
+        ],
+        description="Returns cumulative result count for every result.",
+    )
+)
+class CumulativeResultsViewSet(ListModelMixin, GenericViewSet):
+    queryset = CumulativeResultCount.objects.all()
+    serializer_class = CumulativeResultSerializer
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.queryset
+        type_name = ""
+        postal_code_type_id = request.query_params.get(
+            "postal_code_type",
+            PostalCodeType.objects.get(type_name=PostalCodeType.HOME_POSTAL_CODE).id,
+        )
+        try:
+            postal_code_type_id = int(postal_code_type_id)
+        except ValueError:
+            raise ParseError("'postal_code_type' must be int")
+        postal_code_type = PostalCodeType.objects.filter(id=postal_code_type_id).first()
+        if not postal_code_type:
+            queryset = CumulativeResultCount.objects.none()
+        else:
+            type_name = postal_code_type.type_name
+        page = self.paginate_queryset(queryset)
+        serializer = self.serializer_class(
+            page, many=True, context={"type_name": type_name}
+        )
+        return self.get_paginated_response(serializer.data)
+
+
+register_view(CumulativeResultsViewSet, "cumulativeresult")
 
 
 class PostalCodeTypeViewSet(viewsets.ReadOnlyModelViewSet):
