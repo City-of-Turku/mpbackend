@@ -32,6 +32,7 @@ class User(AbstractUser):
 
     class Meta:
         db_table = "auth_user"
+        ordering = ["-date_joined"]
 
 
 class Profile(models.Model):
