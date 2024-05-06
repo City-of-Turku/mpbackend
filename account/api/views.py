@@ -1,6 +1,7 @@
 from django import db
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from django.db.utils import IntegrityError
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -23,7 +24,7 @@ class MailRateThrottle(AnonRateThrottle):
     The IP address of the incoming request is used to generate a unique key to throttle against.
     """
 
-    rate = "10/day"
+    rate = "50/day"
 
 
 class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
@@ -93,8 +94,7 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
         email = request.data.get("email", None)
         if not email:
             return Response("No 'email' provided", status=status.HTTP_400_BAD_REQUEST)
-        if MailingListEmail.objects.filter(email=email).count() > 0:
-            return Response("'email' exists", status=status.HTTP_400_BAD_REQUEST)
+
         try:
             validate_email(email)
         except ValidationError as e:
@@ -103,8 +103,13 @@ class ProfileViewSet(UpdateModelMixin, viewsets.GenericViewSet):
         if not mailing_list:
             # In case mailing list is not created for the result, it is created.
             mailing_list = MailingList.objects.create(result=result)
-
-        MailingListEmail.objects.create(mailing_list=mailing_list, email=email)
+        try:
+            MailingListEmail.objects.create(mailing_list=mailing_list, email=email)
+        except IntegrityError:
+            return Response(
+                "'email' and 'result' must be jointly null",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         user.has_subscribed = True
         user.save()
         return Response("subscribed", status=status.HTTP_201_CREATED)

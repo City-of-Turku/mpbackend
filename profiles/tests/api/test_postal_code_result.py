@@ -305,3 +305,15 @@ def test_non_existing_postal_code_string(api_client):
     response = api_client.get(url)
     assert response.status_code == 200
     assert response.json()["count"] == 0
+
+
+@pytest.mark.django_db
+def test_cumulative_results(
+    api_client, results, postal_code_types, postal_code_results
+):
+    url = "/api/v1/cumulativeresult/"
+    response = api_client.get(url)
+    assert response.status_code == 200
+    json_data = response.json()
+    assert json_data["count"] == results.count()
+    assert json_data["results"][0]["sum_of_count"] == 6

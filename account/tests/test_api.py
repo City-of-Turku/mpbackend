@@ -43,7 +43,7 @@ def test_unauthenticated_cannot_do_anything(api_client, users):
 @pytest.mark.parametrize(
     "ip_address",
     [
-        ("199.168.1.40"),
+        ("1.1.1.1"),
     ],
 )
 def test_mailing_list_unsubscribe_throttling(
@@ -59,7 +59,7 @@ def test_mailing_list_unsubscribe_throttling(
         response = api_client_with_custom_ip_address.post(
             url, {"email": f"test_{count}@test.com"}
         )
-        assert response.status_code == 200
+        assert response.status_code == 200, response.content
         count += 1
     time.sleep(2)
     response = api_client_with_custom_ip_address.post(
@@ -245,11 +245,11 @@ def test_mailing_user_has_subscribed(api_client, users, results, mailing_lists):
 @pytest.mark.parametrize(
     "ip_address",
     [
-        ("92.68.21.220"),
+        ("1.1.1.2"),
     ],
 )
 def test_mailing_list_subscribe_throttling(
-    api_client_with_custom_ip_address, mailing_list_emails, users
+    api_client_with_custom_ip_address, throttling_users
 ):
     num_requests = int(
         ProfileViewSet.subscribe.kwargs["throttle_classes"][0].rate.split("/")[0]
@@ -261,15 +261,15 @@ def test_mailing_list_subscribe_throttling(
             url,
             {
                 "email": f"throttlling_test_{count}@test.com",
-                "user": users[count].id,
+                "user": throttling_users[count].id,
             },
         )
-        assert response.status_code == 201
+        assert response.status_code == 201, response.content
         count += 1
 
     time.sleep(2)
     response = api_client_with_custom_ip_address.post(
-        url, {"email": f"test_{count}@test.com", "user": users[count].id}
+        url, {"email": f"test_{count}@test.com", "user": throttling_users[count].id}
     )
     assert response.status_code == 429
 
@@ -322,7 +322,7 @@ def test_mailing_list_subscribe_with_invalid_post_data(
 @pytest.mark.parametrize(
     "ip_address",
     [
-        ("100.1.1.40"),
+        ("1.1.1.3"),
     ],
 )
 def test_mailing_list_unsubscribe(
@@ -343,7 +343,7 @@ def test_mailing_list_unsubscribe(
 @pytest.mark.parametrize(
     "ip_address",
     [
-        ("101.1.1.40"),
+        ("1.1.1.4"),
     ],
 )
 def test_mailing_list_unsubscribe_non_existing_email(
@@ -365,7 +365,7 @@ def test_mailing_list_unsubscribe_non_existing_email(
 @pytest.mark.parametrize(
     "ip_address",
     [
-        ("12.6.121.22"),
+        ("1.1.1.5"),
     ],
 )
 def test_mailing_list_unsubscribe_email_not_provided(

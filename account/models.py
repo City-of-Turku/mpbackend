@@ -32,6 +32,7 @@ class User(AbstractUser):
 
     class Meta:
         db_table = "auth_user"
+        ordering = ["-date_joined"]
 
 
 class Profile(models.Model):
@@ -72,12 +73,23 @@ class MailingList(models.Model):
     def csv_emails(self):
         return ",".join([e.email for e in self.emails.all()])
 
+    def number_of_emails(self):
+        return self.emails.count()
+
 
 class MailingListEmail(models.Model):
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
     mailing_list = models.ForeignKey(
         MailingList, related_name="emails", on_delete=models.CASCADE
     )
 
     def __str__(self):
-        return self.email
+        return f"{self.email} {self.mailing_list}"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["email", "mailing_list"],
+                name="email_and_mailing_list_must_be_jointly:unique",
+            )
+        ]
