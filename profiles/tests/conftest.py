@@ -81,6 +81,12 @@ def postal_code_results(postal_codes, postal_code_types, results):
         result=results.first(),
         count=2,
     )
+    PostalCodeResult.objects.create(
+        postal_code=postal_codes.last(),
+        postal_code_type=postal_code_types.first(),
+        result=results.last(),
+        count=0,
+    )
     return PostalCodeResult.objects.all()
 
 
