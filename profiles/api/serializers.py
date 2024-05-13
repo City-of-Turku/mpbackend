@@ -113,7 +113,6 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 
 class PostalCodeResultSerializer(serializers.ModelSerializer):
-    result_topic_en = serializers.CharField(source="result.topic_en", read_only=True)
     postal_code_string = serializers.CharField(
         source="postal_code.postal_code", read_only=True
     )
@@ -130,12 +129,16 @@ class PostalCodeResultSerializer(serializers.ModelSerializer):
             "postal_code_type",
             "postal_code_type_string",
             "result",
-            "result_topic_en",
-            "count",
         ]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        results_topics = {
+            "fi": instance.result.value_fi,
+            "sv": instance.result.value_sv,
+            "en": instance.result.value_en,
+        }
+        representation["result_topics"] = results_topics
         representation["count"] = blur_count(instance.count)
         return representation
 
