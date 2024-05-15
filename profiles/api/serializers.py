@@ -163,7 +163,7 @@ class CumulativeResultSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         type_name = self.context.get("type_name")
         representation = super().to_representation(instance)
-        representation["sum_of_count"] = instance.get_sum_of_count(
-            postal_code_type_name=type_name
+        representation["sum_of_count"] = blur_count(
+            instance.get_sum_of_count(postal_code_type_name=type_name)
         )
         return representation
