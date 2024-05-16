@@ -317,3 +317,5 @@ def test_cumulative_results(
     json_data = response.json()
     assert json_data["count"] == results.count()
     assert json_data["results"][0]["sum_of_count"] == 6
+    # Test that count is blurred
+    assert json_data["results"][1]["sum_of_count"] == 0

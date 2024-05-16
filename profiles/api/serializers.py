@@ -113,7 +113,6 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 
 class PostalCodeResultSerializer(serializers.ModelSerializer):
-    result_topic_en = serializers.CharField(source="result.topic_en", read_only=True)
     postal_code_string = serializers.CharField(
         source="postal_code.postal_code", read_only=True
     )
@@ -130,12 +129,16 @@ class PostalCodeResultSerializer(serializers.ModelSerializer):
             "postal_code_type",
             "postal_code_type_string",
             "result",
-            "result_topic_en",
-            "count",
         ]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        results_topics = {
+            "fi": instance.result.value_fi,
+            "sv": instance.result.value_sv,
+            "en": instance.result.value_en,
+        }
+        representation["result_topics"] = results_topics
         representation["count"] = blur_count(instance.count)
         return representation
 
@@ -160,7 +163,7 @@ class CumulativeResultSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         type_name = self.context.get("type_name")
         representation = super().to_representation(instance)
-        representation["sum_of_count"] = instance.get_sum_of_count(
-            postal_code_type_name=type_name
+        representation["sum_of_count"] = blur_count(
+            instance.get_sum_of_count(postal_code_type_name=type_name)
         )
         return representation

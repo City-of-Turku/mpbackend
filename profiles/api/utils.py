@@ -10,7 +10,8 @@ def blur_count(count, threshold=5):
     Returns a blurred count, which is supposed to hide individual
     postal code results.
     """
-    if count <= threshold:
+
+    if not count or count <= threshold:
         return 0
     else:
         return count
