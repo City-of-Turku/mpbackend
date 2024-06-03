@@ -45,9 +45,9 @@ def test_import_questions():
     assert results_qs[0].num_options == 39
     assert results_qs[1].num_options == 45
     assert results_qs[2].num_options == 39
-    assert results_qs[3].num_options == 39
+    assert results_qs[3].num_options == 37
     assert results_qs[4].num_options == 57
-    assert results_qs[5].num_options == 61
+    assert results_qs[5].num_options == 64
 
     # Test questions
     assert Question.objects.count() == 17
@@ -65,9 +65,9 @@ def test_import_questions():
     sq_auto = sub_q_qs.get(order_number=0)
     assert sq_auto.description_en == "Car"
     assert Option.objects.filter(sub_question=sq_auto).count() == 5
-    sq_auto_4_5 = Option.objects.get(sub_question=sq_auto, order_number=3)
-    assert sq_auto_4_5.value == "4-5"
-    sq_auto_4_5_results = sq_auto_4_5.results.all()
+    sq_auto_1_3 = Option.objects.get(sub_question=sq_auto, order_number=3)
+    assert sq_auto_1_3.value == "1-3 kertaa viikossa"
+    sq_auto_4_5_results = sq_auto_1_3.results.all()
     assert sq_auto_4_5_results.count() == 2
     assert sq_auto_4_5_results[0] == autoilija
     assert sq_auto_4_5_results[1].topic_en == "Habit traveler"
@@ -77,7 +77,10 @@ def test_import_questions():
     sq_walk = sub_q_qs.get(order_number=6)
     sq_walk.description_sv == "Gående"
     assert Option.objects.filter(sub_question=sq_walk).count() == 5
-    assert Option.objects.get(sub_question=sq_walk, order_number=1).value == "1"
+    assert (
+        Option.objects.get(sub_question=sq_walk, order_number=1).value
+        == "harvemmin kuin kerran kuussa"
+    )
     question1d = Question.objects.get(number="1d")
     assert question1d.num_sub_questions == 0
     assert Option.objects.filter(question=question1d).count() == 3
@@ -132,8 +135,10 @@ def test_import_questions():
         sub_question_condition=sq_auto,
     )
     assert condition.option_conditions.count() == 4
-    assert condition.option_conditions.all()[0].value == "1"
-    assert condition.option_conditions.all()[3].value == "6-7"
+    assert condition.option_conditions.all()[0].value == "harvemmin kuin kerran kuussa"
+    assert (
+        condition.option_conditions.all()[3].value == "päivittäin tai lähes päivittäin"
+    )
     assert Question.objects.get(number=16).options.count() == 5
     for number in SKIP_QUESTIONS:
         assert Question.objects.filter(number=number).count() == 0
@@ -161,7 +166,7 @@ def test_import_questions():
     results_qs = Result.objects.all()
     assert results_qs.count() == 6
     assert results_qs[0].num_options == 39
-    assert results_qs[5].num_options == 61
+    assert results_qs[5].num_options == 64
 
     assert Question.objects.count() == 17
     assert QuestionCondition.objects.all().count() == 9
