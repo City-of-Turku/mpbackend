@@ -25,6 +25,8 @@ services:
         volumes:
             - mpbackend:/mpbackend 
             - static:/mpbackend/static
+        restart: unless-stopped
+
 networks:
   nginx_network:
     driver: bridge
